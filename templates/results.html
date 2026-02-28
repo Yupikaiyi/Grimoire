@@ -83,6 +83,20 @@
                     </div>
 
                     <div class="filter-group">
+                        <label>Responsable</label>
+                        <select id="ownerFilter" class="form-select">
+                            <option value="all">Todos los responsables</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Departamento</label>
+                        <select id="deptFilter" class="form-select">
+                            <option value="all">Todos los departamentos</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
                         <label>Etiquetas (Tags)</label>
                         <select id="tagFilter" class="form-select">
                             <option value="all">Todas las etiquetas</option>
@@ -151,6 +165,28 @@
         </div>
     </div>
 
+    <!-- Identity Modal -->
+    <div id="identityModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="user-plus"></i> <span id="identityModalTitle">Asignar Identidad</span></h3>
+                <button onclick="closeModal('identityModal')" class="close-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-content">
+                <div class="form-group mb-4">
+                    <label>Responsable</label>
+                    <input type="text" id="ownerInput" placeholder="Nombre del responsable..."
+                        class="form-control mb-3">
+                </div>
+                <div class="form-group mb-4">
+                    <label>Departamento</label>
+                    <input type="text" id="deptInput" placeholder="Nombre del departamento..." class="form-control">
+                </div>
+                <button onclick="saveIdentity()" class="btn btn-primary w-full mt-4">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         lucide.createIcons();
 
@@ -202,10 +238,14 @@
             const uploadRange = document.getElementById('uploadDateFilter').value;
             const creationRange = document.getElementById('creationDateFilter').value;
             const size = document.getElementById('sizeFilter').value;
+            const owner = document.getElementById('ownerFilter').value;
+            const dept = document.getElementById('deptFilter').value;
 
             let url = `/api/search?q=${encodeURIComponent(currentQuery)}&offset=${currentOffset}`;
             if (uploadRange !== "all") url += `&upload_date_range=${uploadRange}`;
             if (creationRange !== "all") url += `&creation_date_range=${creationRange}`;
+            if (owner !== "all") url += `&owner=${encodeURIComponent(owner)}`;
+            if (dept !== "all") url += `&department=${encodeURIComponent(dept)}`;
 
             const selectedTag = document.getElementById('tagFilter').value;
             if (selectedTag !== "all") url += `&tags=${encodeURIComponent(selectedTag)}`;
@@ -245,11 +285,18 @@
                             <i data-lucide="${getFileIcon(file.name)}" class="file-type-icon text-muted"></i>
                             <div class="file-text-container">
                                 <span class="file-name clickable" onclick="openPreview('${file.name}')">${file.name}</span>
+                                <div class="identity-line">
+                                    ${file.owner ? `<span class="badge-owner"><i data-lucide="user"></i> ${file.owner}</span>` : ''}
+                                    ${file.department ? `<span class="badge-dept"><i data-lucide="building"></i> ${file.department}</span>` : ''}
+                                </div>
                                 <span class="file-size text-muted text-sm">${file.size} - Subido: ${file.date} | Creado: ${file.creation_date}</span>
                             </div>
                         </div>
                         <div class="file-actions">
-                            <button class="icon-btn" title="Propiedades" onclick="openProperties('${file.name}', '${file.size}', '${file.date}', '${file.creation_date}', '${(file.tags || []).join(',')}')">
+                            <button class="icon-btn" title="Identidad" onclick="openIdentityModal('${file.name}', '${file.owner || ''}', '${file.department || ''}')">
+                                <i data-lucide="user-plus"></i>
+                            </button>
+                            <button class="icon-btn" title="Propiedades" onclick="openProperties('${file.name}', '${file.size}', '${file.date}', '${file.creation_date}', '${(file.tags || []).join(',')}', '${file.owner || ''}', '${file.department || ''}')">
                                 <i data-lucide="info"></i>
                             </button>
                             <button class="icon-btn" title="Añadir Tags" onclick="openTagsModal('${file.name}', '${(file.tags || []).join(',')}')">
@@ -297,7 +344,7 @@
             lucide.createIcons();
         }
 
-        function openProperties(name, size, upload, creation, tagsStr) {
+        function openProperties(name, size, upload, creation, tagsStr, owner, dept) {
             const modal = document.getElementById('propertiesModal');
             const content = document.getElementById('propertiesContent');
             const tags = tagsStr ? tagsStr.split(',').filter(t => t.trim() !== '') : [];
@@ -308,6 +355,9 @@
                     <div class="prop-item"><strong>Tamaño:</strong> <span>${size}</span></div>
                     <div class="prop-item"><strong>Fecha Subida:</strong> <span>${upload}</span></div>
                     <div class="prop-item"><strong>Fecha Creación:</strong> <span>${creation}</span></div>
+                    <div class="prop-divider"></div>
+                    <div class="prop-item"><strong>Responsable:</strong> <span>${owner || 'No asignado'}</span></div>
+                    <div class="prop-item"><strong>Departamento:</strong> <span>${dept || 'No asignado'}</span></div>
                     <div class="prop-item"><strong>Etiquetas:</strong>
                         <div class="tags-cloud mt-2">
                             ${tags.length > 0 ? tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '<span class="text-muted">Sin etiquetas</span>'}
@@ -384,6 +434,60 @@
                 if (t === currentVal) opt.selected = true;
                 filter.appendChild(opt);
             });
+            loadIdentityOptions();
+        }
+
+        async function loadIdentityOptions() {
+            const res = await fetch('/api/identity-options');
+            const data = await res.json();
+
+            const ownerFilter = document.getElementById('ownerFilter');
+            const deptFilter = document.getElementById('deptFilter');
+
+            const currentOwner = ownerFilter.value;
+            const currentDept = deptFilter.value;
+
+            ownerFilter.innerHTML = '<option value="all">Todos los responsables</option>';
+            data.owners.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o; opt.textContent = o;
+                if (o === currentOwner) opt.selected = true;
+                ownerFilter.appendChild(opt);
+            });
+
+            deptFilter.innerHTML = '<option value="all">Todos los departamentos</option>';
+            data.departments.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                if (d === currentDept) opt.selected = true;
+                deptFilter.appendChild(opt);
+            });
+        }
+
+        let currentFileForIdentity = "";
+        function openIdentityModal(filename, owner, dept) {
+            currentFileForIdentity = filename;
+            document.getElementById('ownerInput').value = owner;
+            document.getElementById('deptInput').value = dept;
+            const modal = document.getElementById('identityModal');
+            modal.classList.add('active');
+        }
+
+        async function saveIdentity() {
+            const owner = document.getElementById('ownerInput').value.trim();
+            const dept = document.getElementById('deptInput').value.trim();
+
+            const res = await fetch(`/api/files/${encodeURIComponent(currentFileForIdentity)}/identity`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ owner, department: dept })
+            });
+
+            if (res.ok) {
+                closeModal('identityModal');
+                loadIdentityOptions();
+                fetchResults(true);
+            }
         }
 
         function closeModal(id) {

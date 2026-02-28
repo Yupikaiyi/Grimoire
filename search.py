@@ -1,123 +1,97 @@
-import os
 import datetime
-import json
 import sqlite3
+import json
 from elasticsearch import Elasticsearch
 from sentence_transformers import SentenceTransformer
 
-print("Cargando modelo multilingüe para búsqueda semántica...")
+# Initialize ES and Model (In prod, these would be global/singleton)
+es = Elasticsearch("http://localhost:9200")
 search_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
-print("Modelo cargado.")
 
-DB_PATH = 'grimoire.db'
-
-def get_tags_for_file(filename):
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT tags FROM file_tags WHERE filename = ?", (filename,))
-        row = c.fetchone()
-        conn.close()
-        if row:
-            return json.loads(row[0])
-    except:
-        pass
-    return []
+def get_file_metadata_sync(filename):
+    conn = sqlite3.connect('grimoire.db')
+    c = conn.cursor()
+    c.execute("SELECT tags, owner, department FROM file_metadata WHERE filename = ?", (filename,))
+    row = c.fetchone()
+    conn.close()
+    if row:
+        return {
+            'tags': json.loads(row[0]) if row[0] else [],
+            'owner': row[1] or "",
+            'department': row[2] or ""
+        }
+    return {'tags': [], 'owner': "", 'department': ""}
 
 def mock_search_files(query, offset=0, filters=None):
-    """
-    Realiza una búsqueda real sobre Elasticsearch (índice grimoire_files) usando KNN Semántico + Filtros.
-    """
-    if not query or query.strip() == "":
-        return []
-    
-    query = query.lower().strip()
-    results = []
-    
     try:
-        es = Elasticsearch("http://localhost:9200")
-        
-        # Generar vector de la búsqueda
         query_vector = search_model.encode(query).tolist()
         
-        # Construir filtros de metadatos
-        must_filters = []
+        es_filters = []
         if filters:
-            # Función auxiliar para construir rangos de fecha
+            # Date Filter Helper
             def build_date_range(filter_val):
-                d_r = {}
-                if filter_val == "today":
-                    d_r["gte"] = "now/d"
-                elif filter_val == "yesterday":
-                    d_r["gte"] = "now-1d/d"
-                    d_r["lt"] = "now/d"
-                elif filter_val == "week":
-                    d_r["gte"] = "now-7d/d"
-                    d_r["lt"] = "now-1d/d"
-                elif filter_val == "month":
-                    d_r["gte"] = "now-30d/d"
-                    d_r["lt"] = "now-7d/d"
-                elif filter_val == "older":
-                    d_r["lt"] = "now-30d/d"
-                return d_r
+                if not filter_val or filter_val == 'all': return None
+                date_map = {
+                    "today": "now/d",
+                    "yesterday": "now-1d/d",
+                    "week": "now-7d/d",
+                    "month": "now-30d/d"
+                }
+                if filter_val == "older":
+                    return {"lt": "now-30d/d"}
+                return {"gte": date_map.get(filter_val), "lte": "now/d"}
 
-            # Filtro de fecha de SUBIDA
-            upload_range_val = filters.get("upload_date_range")
-            if upload_range_val:
-                u_range = build_date_range(upload_range_val)
-                if u_range:
-                    must_filters.append({"range": {"date": u_range}})
-
-            # Filtro de fecha de CREACIÓN (Local)
-            creation_range_val = filters.get("creation_date_range")
-            if creation_range_val:
-                c_range = build_date_range(creation_range_val)
-                if c_range:
-                    must_filters.append({"range": {"creation_date": c_range}})
+            # Apply Filters
+            if filters.get('tags'):
+                es_filters.append({"terms": {"tags": filters['tags']}})
             
-            # Filtro de tamaño (específico por bytes)
+            if filters.get('owner') and filters['owner'] != 'all':
+                es_filters.append({"term": {"owner.keyword": filters['owner']}})
+                
+            if filters.get('department') and filters['department'] != 'all':
+                es_filters.append({"term": {"department.keyword": filters['department']}})
+
+            u_range = build_date_range(filters.get('upload_date_range'))
+            if u_range: es_filters.append({"range": {"date": u_range}})
+
+            c_range = build_date_range(filters.get('creation_date_range'))
+            if c_range: es_filters.append({"range": {"creation_date": c_range}})
+
             if filters.get("min_size") or filters.get("max_size"):
                 size_range = {}
-                if filters.get("min_size"):
-                    size_range["gte"] = int(filters["min_size"] * 1024 * 1024)
-                if filters.get("max_size"):
-                    size_range["lte"] = int(filters["max_size"] * 1024 * 1024)
-                
-                must_filters.append({"range": {"size_bytes": size_range}})
+                if filters.get("min_size"): size_range["gte"] = int(filters["min_size"] * 1024 * 1024)
+                if filters.get("max_size"): size_range["lte"] = int(filters["max_size"] * 1024 * 1024)
+                es_filters.append({"range": {"size_bytes": size_range}})
 
-            # Filtro por Etiquetas (Tags)
-            tags_filter = filters.get("tags")
-            if tags_filter:
-                if isinstance(tags_filter, list) and len(tags_filter) > 0:
-                    must_filters.append({"terms": {"tags": tags_filter}})
-                elif isinstance(tags_filter, str) and tags_filter != "":
-                    must_filters.append({"term": {"tags": tags_filter}})
-        
-        # Búsqueda vectorial KNN
-        search_body = {
+        body = {
+            "from": offset,
+            "size": 10,
+            "query": {
+                "bool": {
+                    "must": [],
+                    "filter": es_filters
+                }
+            },
             "knn": {
                 "field": "title_vector",
                 "query_vector": query_vector,
                 "k": 100,
-                "num_candidates": 500
-            },
-            "from": offset,
-            "size": 10
+                "num_candidates": 500,
+                "filter": es_filters
+            }
         }
-        
-        if must_filters:
-            search_body["knn"]["filter"] = {"bool": {"must": must_filters}}
-            
-        res = es.search(index="grimoire_files", body=search_body)
-        
+
+        res = es.search(index="grimoire_files", body=body)
+        results = []
         for hit in res['hits']['hits']:
-            doc = hit['_source']
-            doc['id'] = hit['_id']
-            # MERGE con base de datos SQLite para asegurar que los tags son los más recientes
-            doc['tags'] = get_tags_for_file(doc.get('name', ''))
-            results.append(doc)
-            
+            file = hit['_source']
+            # Merge updated identity from SQLite
+            meta = get_file_metadata_sync(file['name'])
+            file['tags'] = meta['tags']
+            file['owner'] = meta['owner']
+            file['department'] = meta['department']
+            results.append(file)
+        return results
     except Exception as e:
-        print(f"Error searching Elasticsearch: {e}")
-            
-    return results
+        print(f"Error in search: {e}")
+        return []
