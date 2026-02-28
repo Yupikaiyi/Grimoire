@@ -960,6 +960,16 @@ body {
     transition: var(--transition);
 }
 
+.file-name {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: var(--transition);
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
 .form-select:focus {
     outline: none;
     border-color: var(--primary);

@@ -97,6 +97,23 @@ def get_all_departments():
     conn.close()
     return data
 
+def get_all_file_types():
+    if not es: return []
+    try:
+        # Use ES aggregation to get unique types
+        res = es.search(index=ES_INDEX_NAME, body={
+            "size": 0,
+            "aggs": {
+                "unique_types": {
+                    "terms": {"field": "type", "size": 100}
+                }
+            }
+        })
+        return [bucket['key'] for bucket in res['aggregations']['unique_types']['buckets']]
+    except Exception as e:
+        print(f"Error fetching types: {e}")
+        return []
+
 # Initialize Elasticsearch Client
 try:
     es = Elasticsearch("http://localhost:9200")
@@ -229,7 +246,8 @@ def search_api():
         "creation_date_range": request.args.get('creation_date_range'),
         "tags": request.args.getlist('tags'),
         "owner": request.args.get('owner'),
-        "department": request.args.get('department')
+        "department": request.args.get('department'),
+        "type": request.args.get('type')
     }
     results = mock_search_files(query, offset=offset, filters=filters)
     return jsonify({"query": query, "results": results})
@@ -237,6 +255,10 @@ def search_api():
 @app.route('/api/tags', methods=['GET'])
 def get_tags():
     return jsonify(get_all_tags_list())
+
+@app.route('/api/file-types', methods=['GET'])
+def get_file_types():
+    return jsonify(get_all_file_types())
 
 @app.route('/api/identity-options', methods=['GET'])
 def get_identity_options():

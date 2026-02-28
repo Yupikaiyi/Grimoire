@@ -103,6 +103,13 @@
                         </select>
                     </div>
 
+                    <div class="filter-group">
+                        <label>Tipo de Archivo</label>
+                        <select id="typeFilter" class="form-select">
+                            <option value="all">Todos los tipos</option>
+                        </select>
+                    </div>
+
                     <button id="applyFilters" class="btn btn-primary w-full">Aplicar Filtros</button>
                 </div>
             </aside>
@@ -197,7 +204,6 @@
         const viewMoreContainer = document.getElementById('viewMoreContainer');
         const viewMoreBtn = document.getElementById('viewMoreBtn');
         const activeQueryDisplay = document.getElementById('activeQueryDisplay');
-        const dateFilter = document.getElementById('dateFilter');
         const applyFilters = document.getElementById('applyFilters');
 
         let currentQuery = new URLSearchParams(window.location.search).get('q') || '';
@@ -250,6 +256,9 @@
             const selectedTag = document.getElementById('tagFilter').value;
             if (selectedTag !== "all") url += `&tags=${encodeURIComponent(selectedTag)}`;
 
+            const selectedType = document.getElementById('typeFilter').value;
+            if (selectedType !== "all") url += `&type=${encodeURIComponent(selectedType)}`;
+
             if (size !== "all") {
                 const [min, max] = size.split('-');
                 if (min !== "0") url += `&min_size=${min}`;
@@ -263,6 +272,72 @@
                     displaySearchResults(data.results, isNewSearch);
                 });
         }
+
+        async function loadFileTypeOptions() {
+            try {
+                const response = await fetch('/api/file-types');
+                const types = await response.json();
+                const select = document.getElementById('typeFilter');
+
+                // Clear existing except "All"
+                while (select.options.length > 1) { select.remove(1); }
+
+                types.forEach(type => {
+                    if (type) {
+                        const option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type.toUpperCase();
+                        select.appendChild(option);
+                    }
+                });
+            } catch (err) { console.error("Error loading file types:", err); }
+        }
+
+        async function loadTagOptions() {
+            try {
+                const response = await fetch('/api/tags');
+                const tags = await response.json();
+                const select = document.getElementById('tagFilter');
+                while (select.options.length > 1) select.remove(1);
+                tags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    select.appendChild(option);
+                });
+            } catch (err) { console.error("Error loading tags:", err); }
+        }
+
+        async function loadIdentityOptions() {
+            try {
+                const response = await fetch('/api/identity-options');
+                const { owners, departments } = await response.json();
+
+                const ownerSelect = document.getElementById('ownerFilter');
+                const deptSelect = document.getElementById('deptFilter');
+
+                while (ownerSelect.options.length > 1) ownerSelect.remove(1);
+                while (deptSelect.options.length > 1) deptSelect.remove(1);
+
+                owners.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o; opt.textContent = o;
+                    ownerSelect.appendChild(opt);
+                });
+                departments.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d; opt.textContent = d;
+                    deptSelect.appendChild(opt);
+                });
+            } catch (err) { console.error("Error loading identity options:", err); }
+        }
+
+        // Initialize options on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTagOptions();
+            loadIdentityOptions();
+            loadFileTypeOptions();
+        });
 
         function displaySearchResults(results, isNewSearch) {
             searchSpinner.classList.add('hidden');

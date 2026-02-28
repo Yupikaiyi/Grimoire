@@ -51,6 +51,9 @@ def mock_search_files(query, offset=0, filters=None):
             if filters.get('department') and filters['department'] != 'all':
                 es_filters.append({"term": {"department.keyword": filters['department']}})
 
+            if filters.get('type') and filters['type'] != 'all':
+                es_filters.append({"term": {"type": filters['type']}})
+
             u_range = build_date_range(filters.get('upload_date_range'))
             if u_range: es_filters.append({"range": {"date": u_range}})
 
