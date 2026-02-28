@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grimoire - Inicio</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
     <header>
         <nav>
@@ -16,16 +18,91 @@
             </ul>
         </nav>
     </header>
-    
+
     <main>
         <div class="container">
-            <h2>Bienvenido a Grimoire</h2>
-            <p>Esta es una aplicación web simple en Python usando Flask.</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            <div class="flashes">
+                {% for category, message in messages %}
+                <div class="flash {{ category }}">
+                    <span>{{ message }}</span>
+                    <button type="button" class="close-btn" onclick="this.parentElement.remove();">&times;</button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+            {% endwith %}
+            <div class="layout-grid">
+                <div class="main-content">
+                    <h2>Bienvenido a Grimoire</h2>
+                    <p>Esta es una aplicación web simple en Python usando Flask.</p>
+                </div>
+
+                <div class="upload-section">
+                    <h3>Subir Archivos</h3>
+                    <form action="/upload" method="post" enctype="multipart/form-data">
+                        <input type="file" name="file" id="fileInput" multiple required>
+                        <ul id="fileList" class="file-list"></ul>
+                        <button type="submit">Subir</button>
+                    </form>
+                </div>
+            </div>
         </div>
     </main>
-    
+
     <footer>
         <p>&copy; 2026 Grimoire. Todos los derechos reservados.</p>
     </footer>
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+
+        // Reference to store all files since DataTransfer is not directly editable
+        let dataTransfer = new DataTransfer();
+
+        fileInput.addEventListener('change', function () {
+            // Append new files to dataTransfer when selecting
+            for (let i = 0; i < this.files.length; i++) {
+                dataTransfer.items.add(this.files[i]);
+            }
+            // Update input files
+            fileInput.files = dataTransfer.files;
+            updateFileList();
+        });
+
+        function updateFileList() {
+            fileList.innerHTML = '';
+            for (let i = 0; i < dataTransfer.files.length; i++) {
+                const li = document.createElement('li');
+
+                const span = document.createElement('span');
+                span.textContent = dataTransfer.files[i].name;
+
+                const removeBtn = document.createElement('button');
+                removeBtn.type = 'button';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.className = 'remove-file-btn';
+                removeBtn.onclick = function () {
+                    // Rebuild the dataTransfer without the removed item
+                    const dt = new DataTransfer();
+                    for (let j = 0; j < dataTransfer.files.length; j++) {
+                        if (j !== i) {
+                            dt.items.add(dataTransfer.files[j]);
+                        }
+                    }
+                    dataTransfer = dt;
+                    fileInput.files = dataTransfer.files;
+                    updateFileList();
+                };
+
+                li.appendChild(span);
+                li.appendChild(removeBtn);
+                fileList.appendChild(li);
+            }
+        }
+    </script>
 </body>
+
 </html>
