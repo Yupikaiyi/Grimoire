@@ -21,7 +21,7 @@
     <header class="glass-header">
         <nav class="nav-container">
             <div class="logo">
-                <i data-lucide="book-open" class="logo-icon"></i>
+                <img src="{{ url_for('static', filename='Icon.png') }}" class="logo-icon">
                 <h1>Grimoire</h1>
             </div>
             <ul class="nav-links">
@@ -79,7 +79,11 @@
                 <i data-lucide="book-open" class="text-muted"></i>
                 <span class="text-muted">&copy; 2026 Grimoire.</span>
             </div>
-            <p class="text-muted text-sm">Diseñado con dedicación.</p>
+            <div class="footer-info">
+                <span class="text-muted text-sm">v1.0.0</span>
+                <span class="separator">|</span>
+                <p class="text-muted text-sm">Diseñado con dedicación.</p>
+            </div>
         </div>
     </footer>
 

@@ -17,10 +17,13 @@ if es.indices.exists(index=index_name):
 mapping = {
     "mappings": {
         "properties": {
-            "name": {"type": "text"},
+            "name": {"type": "keyword"},
             "size": {"type": "keyword"},
+            "size_bytes": {"type": "long"},
             "type": {"type": "keyword"},
-            "date": {"type": "keyword"},
+            "date": {"type": "date", "format": "yyyy-MM-dd"},
+            "creation_date": {"type": "date", "format": "yyyy-MM-dd"},
+            "tags": {"type": "keyword"},
             "title_vector": {
                 "type": "dense_vector",
                 "dims": 384,
@@ -45,16 +48,35 @@ else:
             size_kb = stat.st_size / 1024
             size_str = f"{size_kb / 1024:.1f} MB" if size_kb > 1024 else f"{size_kb:.1f} KB"
             date_str = datetime.datetime.fromtimestamp(stat.st_mtime).strftime('%Y-%m-%d')
+            creation_date_str = datetime.datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d')
             ext = filename.split('.')[-1] if '.' in filename else 'file'
             
             # Generar Vector Semántico del nombre del archivo
             embedding = model.encode(filename).tolist()
             
+            # Obtener tags de SQLite para no perderlos al re-indexar
+            import sqlite3
+            import json
+            tags = []
+            try:
+                conn = sqlite3.connect('grimoire.db')
+                c = conn.cursor()
+                c.execute("SELECT tags FROM file_tags WHERE filename = ?", (filename,))
+                row = c.fetchone()
+                conn.close()
+                if row:
+                    tags = json.loads(row[0])
+            except:
+                pass
+
             doc = {
                 "name": filename,
                 "size": size_str,
+                "size_bytes": stat.st_size,
                 "type": ext,
                 "date": date_str,
+                "creation_date": creation_date_str,
+                "tags": tags,
                 "title_vector": embedding
             }
             try:
