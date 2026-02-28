@@ -5,88 +5,235 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grimoire - Inicio</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-    <header>
-        <nav>
-            <h1>Grimoire</h1>
-            <ul>
-                <li><a href="/">Inicio</a></li>
+    <header class="glass-header">
+        <nav class="nav-container">
+            <div class="logo">
+                <i data-lucide="book-open" class="logo-icon"></i>
+                <h1>Grimoire</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/" class="active">Inicio</a></li>
                 <li><a href="/about">Acerca de</a></li>
             </ul>
         </nav>
     </header>
 
-    <main>
-        <div class="page-layout">
-            <div class="container main-content">
+    <main class="page-container">
+        <div class="content-grid">
+            <section class="card hero-section">
+                <!-- Flash Messages -->
                 {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                 <div class="flashes">
                     {% for category, message in messages %}
                     <div class="flash {{ category }}">
-                        <span>{{ message }}</span>
-                        <button type="button" class="close-btn" onclick="this.parentElement.remove();">&times;</button>
+                        <div class="flash-content">
+                            <i data-lucide="{{ 'check-circle' if category == 'success' else 'alert-circle' }}"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                        <button type="button" class="icon-btn close-btn" onclick="this.parentElement.remove();"
+                            aria-label="Cerrar">
+                            <i data-lucide="x"></i>
+                        </button>
                     </div>
                     {% endfor %}
                 </div>
                 {% endif %}
                 {% endwith %}
 
-                <h2>Bienvenido a Grimoire</h2>
-                <p>Esta es una aplicación web simple en Python usando Flask.</p>
-            </div>
+                <div class="hero-content">
+                    <div class="badge">v1.0.0</div>
+                    <h2>Bienvenido a Grimoire</h2>
+                    <p class="text-muted">Una plataforma ágil y moderna para la gestión de archivos, construida con la
+                        robustez de Python y la elegancia del minimalismo.</p>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div class="search-box">
+                        <i data-lucide="search" class="search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Buscar archivos, documentos, scripts..."
+                            autocomplete="off">
+                        <div class="search-spinner hidden" id="searchSpinner"></div>
+                    </div>
+                </div>
+
+                <!-- Search Results Area -->
+                <div id="searchResults" class="search-results-container hidden">
+                    <div class="results-header">
+                        <h3>Resultados de Búsqueda</h3>
+                        <span id="resultsCount" class="badge">0 encontrados</span>
+                    </div>
+                    <ul id="resultsList" class="file-list">
+                        <!-- Results injected here via JS -->
+                    </ul>
+                    <div id="viewMoreContainer" class="view-more-container hidden">
+                        <button id="viewMoreBtn" class="view-more-btn">Ver más resultados</button>
+                    </div>
+                </div>
+            </section>
 
             <aside class="upload-sidebar">
-                <div class="upload-section">
-                    <h3>Subir Archivos</h3>
-                    <form action="/upload" method="post" enctype="multipart/form-data">
-                        <input type="file" name="file" id="fileInput" multiple required>
-                        <ul id="fileList" class="file-list"></ul>
-                        <button type="submit">Subir</button>
+                <div class="card upload-card">
+                    <div class="card-header">
+                        <i data-lucide="cloud-upload" class="section-icon"></i>
+                        <h3>Subir Archivos</h3>
+                    </div>
+
+                    <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+                        <div class="drop-zone" id="dropZone">
+                            <i data-lucide="upload-cloud" class="upload-icon"></i>
+                            <p>Arrástralos aquí o <span>haz clic para buscar</span></p>
+                            <input type="file" name="file" id="fileInput" multiple required class="hidden-input">
+                        </div>
+
+                        <ul id="fileList" class="file-list empty">
+                            <li class="empty-state">No hay archivos seleccionados</li>
+                        </ul>
+
+                        <button type="submit" class="btn btn-primary w-full">
+                            <span>Subir Archivos</span>
+                            <i data-lucide="arrow-up-right"></i>
+                        </button>
                     </form>
                 </div>
             </aside>
         </div>
     </main>
 
-    <footer>
-        <p>&copy; 2026 Grimoire. Todos los derechos reservados.</p>
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i data-lucide="book-open" class="text-muted"></i>
+                <span class="text-muted">&copy; 2026 Grimoire.</span>
+            </div>
+            <p class="text-muted text-sm">Diseñado con dedicación.</p>
+        </div>
     </footer>
 
+    <!-- Initialize Icons Workspace -->
+    <script>
+        lucide.createIcons();
+    </script>
+
+    <!-- File Upload Interaction Logic -->
     <script>
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
-
-        // Reference to store all files since DataTransfer is not directly editable
+        const dropZone = document.getElementById('dropZone');
         let dataTransfer = new DataTransfer();
 
-        fileInput.addEventListener('change', function () {
-            // Append new files to dataTransfer when selecting
-            for (let i = 0; i < this.files.length; i++) {
-                dataTransfer.items.add(this.files[i]);
+        // Native click proxy
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        // Drag & Drop visual feedback
+        ['dragover', 'dragenter'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.add('drag-active');
+            });
+        });
+
+        ['dragleave', 'dragend', 'drop'].forEach(evt => {
+            dropZone.addEventListener(evt, e => {
+                e.preventDefault();
+                dropZone.classList.remove('drag-active');
+            });
+        });
+
+        dropZone.addEventListener('drop', e => {
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                handleFiles(files);
             }
-            // Update input files
+        });
+
+        fileInput.addEventListener('change', function () {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            for (let i = 0; i < files.length; i++) {
+                dataTransfer.items.add(files[i]);
+            }
             fileInput.files = dataTransfer.files;
             updateFileList();
-        });
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'];
+            const docExts = ['pdf', 'doc', 'docx', 'txt', 'md'];
+            const codeExts = ['py', 'js', 'html', 'css', 'json'];
+
+            if (imageExts.includes(ext)) return 'image';
+            if (docExts.includes(ext)) return 'file-text';
+            if (codeExts.includes(ext)) return 'file-code';
+            return 'file';
+        }
 
         function updateFileList() {
             fileList.innerHTML = '';
+
+            if (dataTransfer.files.length === 0) {
+                fileList.classList.add('empty');
+                fileList.innerHTML = '<li class="empty-state">No hay archivos seleccionados</li>';
+                return;
+            }
+
+            fileList.classList.remove('empty');
+
             for (let i = 0; i < dataTransfer.files.length; i++) {
                 const li = document.createElement('li');
+                li.className = 'file-item';
+
+                const fileInfo = document.createElement('div');
+                fileInfo.className = 'file-info';
+
+                // Add specific icon based on extension
+                const iconName = getFileIcon(dataTransfer.files[i].name);
+                const fileIcon = document.createElement('i');
+                fileIcon.setAttribute('data-lucide', iconName);
+                fileIcon.className = 'file-type-icon text-muted';
 
                 const span = document.createElement('span');
+                span.className = 'file-name';
                 span.textContent = dataTransfer.files[i].name;
+
+                const sizeSpan = document.createElement('span');
+                sizeSpan.className = 'file-size text-muted text-sm';
+                sizeSpan.textContent = (dataTransfer.files[i].size / 1024).toFixed(1) + ' KB';
+
+                const textContainer = document.createElement('div');
+                textContainer.className = 'file-text-container';
+                textContainer.appendChild(span);
+                textContainer.appendChild(sizeSpan);
+
+                fileInfo.appendChild(fileIcon);
+                fileInfo.appendChild(textContainer);
 
                 const removeBtn = document.createElement('button');
                 removeBtn.type = 'button';
-                removeBtn.innerHTML = '&times;';
-                removeBtn.className = 'remove-file-btn';
-                removeBtn.onclick = function () {
-                    // Rebuild the dataTransfer without the removed item
+                removeBtn.className = 'icon-btn remove-btn text-danger';
+                // Using an inline SVG for the remove icon before lucide processes it
+                removeBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>';
+                removeBtn.title = "Eliminar archivo";
+
+                removeBtn.onclick = function (e) {
+                    e.stopPropagation();
                     const dt = new DataTransfer();
                     for (let j = 0; j < dataTransfer.files.length; j++) {
                         if (j !== i) {
@@ -98,11 +245,234 @@
                     updateFileList();
                 };
 
-                li.appendChild(span);
+                li.appendChild(fileInfo);
                 li.appendChild(removeBtn);
                 fileList.appendChild(li);
             }
+
+            // Re-initialize icons for dynamically added elements
+            lucide.createIcons();
         }
+    </script>
+
+    <!-- Search Interaction Logic -->
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const searchSpinner = document.getElementById('searchSpinner');
+        const searchResults = document.getElementById('searchResults');
+        const resultsList = document.getElementById('resultsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const viewMoreContainer = document.getElementById('viewMoreContainer');
+        const viewMoreBtn = document.getElementById('viewMoreBtn');
+
+        let debounceTimer;
+        let currentQuery = '';
+        let currentOffset = 0;
+        let allResultsCount = 0;
+
+        searchInput.addEventListener('input', function () {
+            const query = this.value.trim();
+
+            clearTimeout(debounceTimer);
+
+            if (query.length === 0) {
+                searchResults.classList.add('hidden');
+                searchSpinner.classList.add('hidden');
+                viewMoreContainer.classList.add('hidden');
+                currentQuery = '';
+                currentOffset = 0;
+                return;
+            }
+
+            searchSpinner.classList.remove('hidden');
+
+            debounceTimer = setTimeout(() => {
+                currentQuery = query;
+                currentOffset = 0;
+                allResultsCount = 0;
+                fetchResults(true);
+            }, 300); // 300ms debounce
+        });
+
+        viewMoreBtn.addEventListener('click', () => {
+            currentOffset += 10;
+            fetchResults(false);
+        });
+
+        function fetchResults(isNewSearch) {
+            searchSpinner.classList.remove('hidden');
+
+            fetch(`/api/search?q=${encodeURIComponent(currentQuery)}&offset=${currentOffset}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    displaySearchResults(data.results, isNewSearch);
+                })
+                .catch(error => {
+                    console.error('Error fetching search results:', error);
+                    searchSpinner.classList.add('hidden');
+                });
+        }
+
+        function displaySearchResults(results, isNewSearch) {
+            searchSpinner.classList.add('hidden');
+
+            if (isNewSearch) {
+                resultsList.innerHTML = '';
+            }
+
+            if (results.length === 0 && isNewSearch) {
+                resultsList.classList.add('empty');
+                resultsList.innerHTML = '<li class="empty-state">No se encontraron resultados para tu búsqueda.</li>';
+                viewMoreContainer.classList.add('hidden');
+                resultsCount.textContent = `0 encontrados`;
+            } else {
+                resultsList.classList.remove('empty');
+
+                if (isNewSearch) {
+                    allResultsCount = results.length;
+                } else {
+                    allResultsCount += results.length;
+                }
+
+                results.forEach(file => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+
+                    const fileInfo = document.createElement('div');
+                    fileInfo.className = 'file-info';
+
+                    const fileIcon = document.createElement('i');
+                    fileIcon.setAttribute('data-lucide', getFileIcon(file.name));
+                    fileIcon.className = 'file-type-icon text-muted';
+
+                    const span = document.createElement('span');
+                    span.className = 'file-name clickable';
+                    span.textContent = file.name;
+                    span.title = "Click para previsualizar";
+                    span.onclick = () => openPreview(file.name);
+
+                    const metaContainer = document.createElement('div');
+                    metaContainer.className = 'file-text-container';
+                    metaContainer.appendChild(span);
+
+                    const detailsSpan = document.createElement('span');
+                    detailsSpan.className = 'file-size text-muted text-sm';
+                    detailsSpan.textContent = `${file.size} - Subido: ${file.date}`;
+                    metaContainer.appendChild(detailsSpan);
+
+                    fileInfo.appendChild(fileIcon);
+                    fileInfo.appendChild(metaContainer);
+
+                    const actionBtn = document.createElement('button');
+                    actionBtn.type = 'button';
+                    actionBtn.className = 'icon-btn text-primary';
+                    actionBtn.innerHTML = '<i data-lucide="download"></i>';
+                    actionBtn.title = "Descargar";
+
+                    li.appendChild(fileInfo);
+                    li.appendChild(actionBtn);
+                    resultsList.appendChild(li);
+                });
+
+                // Mostrar botón de "Ver más" si recibimos 10 resultados (puede haber más)
+                if (results.length === 10) {
+                    viewMoreContainer.classList.remove('hidden');
+                } else {
+                    viewMoreContainer.classList.add('hidden');
+                }
+
+                resultsCount.textContent = `${allResultsCount} encontrados`;
+            }
+
+            searchResults.classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function openPreview(filename) {
+            const modalTitle = document.getElementById('modalTitle');
+            const modalContent = document.getElementById('modalContent');
+            const previewModal = document.getElementById('previewModal');
+
+            modalTitle.querySelector('span').textContent = filename;
+            modalContent.innerHTML = '<div class="search-spinner"></div>'; // Loading indicator
+            previewModal.classList.add('active');
+
+            const ext = filename.split('.').pop().toLowerCase();
+            const fileUrl = `/api/files/${encodeURIComponent(filename)}`;
+
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) {
+                // Image Preview
+                modalContent.innerHTML = `<img src="${fileUrl}" class="preview-image" alt="${filename}">`;
+            } else if (ext === 'pdf') {
+                // PDF Preview
+                modalContent.innerHTML = `<iframe src="${fileUrl}" class="preview-pdf"></iframe>`;
+            } else if (['txt', 'csv', 'py', 'js', 'html', 'css', 'md', 'json', 'xfl'].includes(ext)) {
+                // Text/Code Preview
+                fetch(fileUrl)
+                    .then(res => res.text())
+                    .then(text => {
+                        modalContent.innerHTML = `<pre class="preview-text">${escapeHtml(text)}</pre>`;
+                    })
+                    .catch(e => {
+                        modalContent.innerHTML = `<div class="preview-unknown">Error al cargar el archivo.</div>`;
+                    });
+            } else {
+                // Unknown type
+                modalContent.innerHTML = `
+                    <div class="preview-unknown">
+                        <i data-lucide="help-circle" style="width: 48px; height: 48px;"></i>
+                        <p>No hay previsualización disponible para este tipo de archivo (.${ext})</p>
+                        <a href="${fileUrl}" download class="btn btn-primary">Descargar para ver</a>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+    <!-- File Preview Modal -->
+    <div id="previewModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">
+                    <i data-lucide="file-text"></i>
+                    <span>Nombre del archivo.pdf</span>
+                </h3>
+                <button id="closeModal" class="close-modal" title="Cerrar">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div id="modalContent" class="modal-content">
+                <!-- Content injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Logic -->
+    <script>
+        // Modal logic
+        const previewModal = document.getElementById('previewModal');
+        const closeModal = document.getElementById('closeModal');
+
+        closeModal.addEventListener('click', () => {
+            previewModal.classList.remove('active');
+            document.getElementById('modalContent').innerHTML = ''; // Clear content
+        });
+
+        previewModal.addEventListener('click', (e) => {
+            if (e.target === previewModal) {
+                previewModal.classList.remove('active');
+                document.getElementById('modalContent').innerHTML = '';
+            }
+        });
     </script>
 </body>
 

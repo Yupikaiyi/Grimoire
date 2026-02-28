@@ -1,37 +1,92 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grimoire - Acerca de</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
-    <header>
-        <nav>
-            <h1>Grimoire</h1>
-            <ul>
+    <header class="glass-header">
+        <nav class="nav-container">
+            <div class="logo">
+                <i data-lucide="book-open" class="logo-icon"></i>
+                <h1>Grimoire</h1>
+            </div>
+            <ul class="nav-links">
                 <li><a href="/">Inicio</a></li>
-                <li><a href="/about">Acerca de</a></li>
+                <li><a href="/about" class="active">Acerca de</a></li>
             </ul>
         </nav>
     </header>
-    
-    <main>
-        <div class="container">
-            <h2>Acerca de Grimoire</h2>
-            <p>Grimoire es una aplicación web desarrollada con Python y Flask.</p>
-            <p>Características:</p>
-            <ul>
-                <li>Ligera y rápida</li>
-                <li>Fácil de expandir</li>
-                <li>Basada en Flask</li>
-            </ul>
+
+    <main class="page-container about-page">
+        <div class="card about-card">
+            <div class="about-header">
+                <div class="icon-wrapper">
+                    <i data-lucide="info" class="text-primary"></i>
+                </div>
+                <h2>Acerca de Grimoire</h2>
+                <p class="text-muted subtitle">Grimoire es una aplicación web desarrollada con Python y Flask.</p>
+            </div>
+
+            <div class="features-section">
+                <h3 class="features-title">Características</h3>
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <div class="feature-icon"><i data-lucide="zap"></i></div>
+                        <div class="feature-text">
+                            <strong>Ligera y rápida</strong>
+                            <span class="text-muted text-sm">Optimizada para un rendimiento excelente sin sobrecargas
+                                innecesarias.</span>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon"><i data-lucide="layers"></i></div>
+                        <div class="feature-text">
+                            <strong>Fácil de expandir</strong>
+                            <span class="text-muted text-sm">Arquitectura modular que permite agregar nuevas
+                                funcionalidades fácilmente.</span>
+                        </div>
+                    </li>
+                    <li class="feature-item">
+                        <div class="feature-icon"><i data-lucide="server"></i></div>
+                        <div class="feature-text">
+                            <strong>Basada en Flask</strong>
+                            <span class="text-muted text-sm">Aprovecha el poderoso microframework preferido por la
+                                comunidad Python.</span>
+                        </div>
+                    </li>
+                </ul>
+            </div>
         </div>
     </main>
-    
-    <footer>
-        <p>&copy; 2026 Grimoire. Todos los derechos reservados.</p>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i data-lucide="book-open" class="text-muted"></i>
+                <span class="text-muted">&copy; 2026 Grimoire.</span>
+            </div>
+            <p class="text-muted text-sm">Diseñado con dedicación.</p>
+        </div>
     </footer>
+
+    <!-- Initialize Icons Workspace -->
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
+
 </html>
