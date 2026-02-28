@@ -20,25 +20,26 @@
     </header>
 
     <main>
-        <div class="container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            <div class="flashes">
-                {% for category, message in messages %}
-                <div class="flash {{ category }}">
-                    <span>{{ message }}</span>
-                    <button type="button" class="close-btn" onclick="this.parentElement.remove();">&times;</button>
+        <div class="page-layout">
+            <div class="container main-content">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flashes">
+                    {% for category, message in messages %}
+                    <div class="flash {{ category }}">
+                        <span>{{ message }}</span>
+                        <button type="button" class="close-btn" onclick="this.parentElement.remove();">&times;</button>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-            {% endif %}
-            {% endwith %}
-            <div class="layout-grid">
-                <div class="main-content">
-                    <h2>Bienvenido a Grimoire</h2>
-                    <p>Esta es una aplicación web simple en Python usando Flask.</p>
-                </div>
+                {% endif %}
+                {% endwith %}
 
+                <h2>Bienvenido a Grimoire</h2>
+                <p>Esta es una aplicación web simple en Python usando Flask.</p>
+            </div>
+
+            <aside class="upload-sidebar">
                 <div class="upload-section">
                     <h3>Subir Archivos</h3>
                     <form action="/upload" method="post" enctype="multipart/form-data">
@@ -47,7 +48,7 @@
                         <button type="submit">Subir</button>
                     </form>
                 </div>
-            </div>
+            </aside>
         </div>
     </main>
 

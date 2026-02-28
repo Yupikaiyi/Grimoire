@@ -22,7 +22,7 @@ nav {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    max-width: 1200px;
+    max-width: 1572px;
     margin: 0 auto;
     padding: 0 2rem;
 }
@@ -84,14 +84,22 @@ footer {
     margin-top: 2rem;
 }
 
-.layout-grid {
+.page-layout {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 340px;
     gap: 2rem;
+    max-width: 1572px;
+    margin: 0 auto;
+    align-items: start;
 }
 
-@media (max-width: 768px) {
-    .layout-grid {
+.page-layout .main-content {
+    max-width: 100%;
+    margin: 0;
+}
+
+@media (max-width: 900px) {
+    .page-layout {
         grid-template-columns: 1fr;
     }
 }
