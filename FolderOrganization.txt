@@ -1,0 +1,28 @@
+Grimoire/
+├── app/
+│   ├── __init__.py          # Inicializa la aplicación Flask
+│   ├── routes.py            # Definición de rutas
+│   ├── services/
+│   │   ├── file_service.py  # Lógica de subida y extracción de texto
+│   │   ├── ai_service.py    # Resumen con Gemini
+│   │   └── search_service.py# Lógica de búsqueda semántica
+│   ├── models.py            # Modelos de base de datos
+│   ├── templates/
+│   │   ├── index.html
+│   │   └── about.html
+│   └── static/
+│       ├── css/
+│       │   └── style.css
+│       ├── js/
+│       └── images/
+│
+├── uploads/                 # Archivos subidos por usuarios
+├── instance/
+│   └── database.db          # Base de datos SQLite
+│
+├── run.py                   # Punto de entrada de la aplicación
+├── config.py                # Configuración (API keys, settings)
+├── requirements.txt         # Dependencias
+├── .env                     # Variables de entorno (no subir a Git)
+├── .gitignore
+└── README.md

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grimoire - Document Analysis & Search</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>📚 Grimoire</h1>
+            <p class="subtitle">AI-Powered Document Analysis & Semantic Search</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/about">About</a></li>
+            </ul>
+        </nav>
+
+        <main>
+            <section class="upload-section">
+                <h2>Upload Documents</h2>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="fileInput" multiple accept=".pdf,.txt,.docx,.doc" style="display: none;">
+                    <p>Drag and drop your files here or <span class="click-here">click to select</span></p>
+                    <p class="file-info">Supported formats: PDF, TXT, DOCX, DOC (Max 50MB)</p>
+                </div>
+                <div id="uploadProgress"></div>
+            </section>
+
+            <section class="tools-section">
+                <div class="tool">
+                    <h3>Extract Text</h3>
+                    <p>Extract text from uploaded documents</p>
+                    <button id="extractBtn" class="btn" disabled>Extract Text</button>
+                </div>
+                <div class="tool">
+                    <h3>Summarize</h3>
+                    <p>Generate AI-powered summaries using Gemini</p>
+                    <button id="summarizeBtn" class="btn" disabled>Summarize</button>
+                </div>
+                <div class="tool">
+                    <h3>Search</h3>
+                    <p>Semantic search across documents</p>
+                    <input type="text" id="searchInput" placeholder="Enter search query..." class="search-input">
+                    <button id="searchBtn" class="btn" disabled>Search</button>
+                </div>
+            </section>
+
+            <section class="results-section">
+                <h2>Results</h2>
+                <div id="resultsContainer"></div>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 Grimoire. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
