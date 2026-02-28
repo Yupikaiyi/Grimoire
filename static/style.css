@@ -583,10 +583,31 @@ body {
     overflow: hidden;
 }
 
-.file-type-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
+.no-preview-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    background: var(--bg-card);
+    border-radius: 12px;
+    height: 100%;
+}
+
+.no-preview-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.no-preview-text {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 400px;
+    line-height: 1.5;
 }
 
 .file-text-container {
@@ -960,14 +981,85 @@ body {
     transition: var(--transition);
 }
 
+.file-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.3rem;
+}
+
 .file-name {
     font-weight: 700;
     font-size: 1.1rem;
     color: var(--text-main);
     cursor: pointer;
     transition: var(--transition);
-    display: block;
-    margin-bottom: 0.2rem;
+}
+
+.ext-badge {
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+/* Colores por extensión */
+.ext-pdf {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.ext-docx,
+.ext-doc {
+    border-color: #3b82f6;
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.ext-zip,
+.ext-rar,
+.ext-7z {
+    border-color: #f59e0b;
+    color: #f59e0b;
+    background: rgba(245, 158, 11, 0.05);
+}
+
+.ext-jpg,
+.ext-png,
+.ext-webp,
+.ext-jpeg {
+    border-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.ext-txt,
+.ext-md {
+    border-color: #6b7280;
+    color: #6b7280;
+    background: rgba(107, 114, 128, 0.05);
+}
+
+.ext-xlsx,
+.ext-csv {
+    border-color: #16a34a;
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.05);
+}
+
+.ext-py,
+.ext-js,
+.ext-html,
+.ext-css {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.05);
 }
 
 .form-select:focus {

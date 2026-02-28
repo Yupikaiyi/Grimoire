@@ -355,11 +355,19 @@
                 results.forEach(file => {
                     const li = document.createElement('li');
                     li.className = 'file-item';
+
+                    const nameParts = file.name.split('.');
+                    const ext = nameParts.length > 1 ? nameParts.pop() : '';
+                    const baseName = nameParts.join('.');
+
                     li.innerHTML = `
                         <div class="file-info">
                             <i data-lucide="${getFileIcon(file.name)}" class="file-type-icon text-muted"></i>
                             <div class="file-text-container">
-                                <span class="file-name clickable" onclick="openPreview('${file.name}')">${file.name}</span>
+                                <div class="file-header">
+                                    <span class="file-name clickable" onclick="openPreview('${file.name}')">${baseName}</span>
+                                    ${ext ? `<span class="ext-badge ext-${ext.toLowerCase()}">${ext}</span>` : ''}
+                                </div>
                                 <div class="identity-line">
                                     ${file.owner ? `<span class="badge-owner"><i data-lucide="user"></i> ${file.owner}</span>` : ''}
                                     ${file.department ? `<span class="badge-dept"><i data-lucide="building"></i> ${file.department}</span>` : ''}
@@ -391,9 +399,24 @@
 
         function getFileIcon(filename) {
             const ext = filename.split('.').pop().toLowerCase();
+            // Imágenes
             if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) return 'image';
-            if (['pdf', 'doc', 'docx', 'txt', 'md'].includes(ext)) return 'file-text';
-            if (['py', 'js', 'html', 'css', 'json'].includes(ext)) return 'file-code';
+            // Documentos
+            if (ext === 'pdf') return 'file-text';
+            if (['doc', 'docx'].includes(ext)) return 'file-text';
+            if (['txt', 'md'].includes(ext)) return 'file-type-2';
+            // Hojas de cálculo y presentaciones
+            if (['xls', 'xlsx', 'csv'].includes(ext)) return 'file-spreadsheet';
+            if (['ppt', 'pptx'].includes(ext)) return 'presentation';
+            // Archivos comprimidos
+            if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+            // Código
+            if (['py', 'js', 'html', 'css', 'json', 'cpp', 'c', 'java'].includes(ext)) return 'file-code';
+            if (['sql', 'db', 'sqlite'].includes(ext)) return 'database';
+            // Audio y Video
+            if (['mp3', 'wav', 'ogg'].includes(ext)) return 'music';
+            if (['mp4', 'mov', 'avi'].includes(ext)) return 'video';
+
             return 'file';
         }
 
@@ -407,14 +430,29 @@
             const ext = filename.split('.').pop().toLowerCase();
             const url = `/api/files/${encodeURIComponent(filename)}`;
 
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext)) {
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+            const textExts = ['txt', 'md', 'py', 'js', 'html', 'css', 'json', 'sql', 'c', 'cpp', 'java'];
+            const pdfExts = ['pdf'];
+
+            if (imageExts.includes(ext)) {
                 content.innerHTML = `<img src="${url}" class="preview-image">`;
-            } else if (ext === 'pdf') {
+            } else if (pdfExts.includes(ext)) {
                 content.innerHTML = `<iframe src="${url}" class="preview-pdf"></iframe>`;
-            } else {
+            } else if (textExts.includes(ext)) {
                 fetch(url).then(r => r.text()).then(t => {
                     content.innerHTML = `<pre class="preview-text">${t.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>`;
                 });
+            } else {
+                // Archivos no previsualizables (RAR, ZIP, EXE, XFL, etc.)
+                content.innerHTML = `
+                    <div class="no-preview-container">
+                        <i data-lucide="eye-off" class="no-preview-icon"></i>
+                        <p class="no-preview-text">La previsualización no está disponible para este tipo de archivo (.${ext})</p>
+                        <a href="${url}" download class="btn btn-primary mt-4">
+                            <i data-lucide="download"></i> Descargar para ver
+                        </a>
+                    </div>
+                `;
             }
             lucide.createIcons();
         }
