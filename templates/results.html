@@ -33,7 +33,30 @@
             </div>
             <ul class="nav-links">
                 <li><a href="/">Inicio</a></li>
-                <li><a href="/about">Acerca de</a></li>
+                <li><a href="/about" class="text-muted">Acerca de</a></li>
+                {% if user and user.is_admin %}
+                <li><a href="/admin" class="text-muted">Administración</a></li>
+                {% endif %}
+                {% if user %}
+                <li>
+                    <div class="user-badge" id="user-badge">
+                        <div class="user-avatar">{{ user.username[0].upper() }}</div>
+                        <div class="user-meta">
+                            <span class="user-name">{{ user.username }}</span>
+                            <span class="user-dept">{{ user.department }} {% if user.is_admin %}<span
+                                    class="admin-label">Admin</span>{% endif %}</span>
+                        </div>
+                        <a href="/logout" class="logout-btn" title="Cerrar sesión"><i data-lucide="log-out"></i></a>
+                    </div>
+                </li>
+                {% else %}
+                <li>
+                    <a href="/login" class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="log-in" style="width: 16px; height: 16px;"></i> Iniciar Sesión
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
     </header>
@@ -263,13 +286,12 @@
                 const [min, max] = size.split('-');
                 if (min !== "0") url += `&min_size=${min}`;
                 if (max !== "100" && max !== "0") url += `&max_size=${max}`;
-                else if (max === "0") { /* Handle >100MB properly */ }
             }
 
             fetch(url)
                 .then(res => res.json())
                 .then(data => {
-                    displaySearchResults(data.results, isNewSearch);
+                    displaySearchResults(data.results, isNewSearch, data.user);
                 });
         }
 
@@ -339,7 +361,7 @@
             loadFileTypeOptions();
         });
 
-        function displaySearchResults(results, isNewSearch) {
+        function displaySearchResults(results, isNewSearch, userInfo = null) {
             searchSpinner.classList.add('hidden');
             if (isNewSearch) resultsList.innerHTML = '';
 
@@ -364,8 +386,11 @@
                         <div class="file-info">
                             <i data-lucide="${getFileIcon(file.name)}" class="file-type-icon text-muted"></i>
                             <div class="file-text-container">
-                                <div class="file-header">
-                                    <span class="file-name clickable" onclick="openPreview('${file.name}')">${baseName}</span>
+                                <div class="file-header" style="display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 10;">
+                                    <button class="icon-btn favorite-btn" onclick="toggleFavorite('${file.name}', this)" title="Marcar/Desmarcar Favorito" style="padding: 0; margin-right: 0.25rem;">
+                                        <i data-lucide="star" style="color: ${file.is_favorite ? '#f59e0b' : 'currentColor'}; fill: ${file.is_favorite ? '#f59e0b' : 'none'};"></i>
+                                    </button>
+                                    <span class="file-name clickable" onclick="openPreview('${file.name}')" style="cursor: pointer; z-index: 20; position: relative;">${baseName}</span>
                                     ${ext ? `<span class="ext-badge ext-${ext.toLowerCase()}">${ext}</span>` : ''}
                                 </div>
                                 <div class="identity-line">
@@ -376,16 +401,20 @@
                             </div>
                         </div>
                         <div class="file-actions">
-                            <button class="icon-btn" title="Identidad" onclick="openIdentityModal('${file.name}', '${file.owner || ''}', '${file.department || ''}')">
-                                <i data-lucide="user-plus"></i>
+                            ${userInfo && userInfo.is_admin ? `
+                                <button class="icon-btn" title="Identidad" onclick="openIdentityModal('${file.name}', '${file.owner || ''}', '${file.department || ''}')">
+                                    <i data-lucide="user-plus"></i>
+                                </button>
+                            ` : ''}
+                            <button class="icon-btn" title="Añadir Tags" onclick="openTagsModal('${file.name}', '${(file.tags || []).join(',')}')">
+                                <i data-lucide="hash"></i>
                             </button>
                             <button class="icon-btn" title="Propiedades" onclick="openProperties('${file.name}', '${file.size}', '${file.date}', '${file.creation_date}', '${(file.tags || []).join(',')}', '${file.owner || ''}', '${file.department || ''}')">
                                 <i data-lucide="info"></i>
                             </button>
-                            <button class="icon-btn" title="Añadir Tags" onclick="openTagsModal('${file.name}', '${(file.tags || []).join(',')}')">
-                                <i data-lucide="hash"></i>
-                            </button>
-                            <button class="icon-btn text-primary"><i data-lucide="download"></i></button>
+                            <a href="/api/files/${encodeURIComponent(file.name)}" download class="icon-btn text-primary" title="Descargar">
+                                <i data-lucide="download"></i>
+                            </a>
                         </div>
                     `;
                     resultsList.appendChild(li);
@@ -605,6 +634,31 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
+        }
+
+        async function toggleFavorite(filename, btn) {
+            try {
+                const res = await fetch('/api/favorites/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const icon = btn.querySelector('svg') || btn.querySelector('i');
+                    if (icon) {
+                        if (data.is_favorite) {
+                            icon.style.color = '#f59e0b';
+                            icon.style.fill = '#f59e0b';
+                        } else {
+                            icon.style.color = 'currentColor';
+                            icon.style.fill = 'none';
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error toggling favorite:", err);
+            }
         }
 
         // Cargar tags al iniciar

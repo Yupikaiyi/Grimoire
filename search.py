@@ -66,6 +66,21 @@ def mock_search_files(query, offset=0, filters=None):
                 if filters.get("max_size"): size_range["lte"] = int(filters["max_size"] * 1024 * 1024)
                 es_filters.append({"range": {"size_bytes": size_range}})
 
+            # Security Filter: Non-admins see their department OR public files (empty department)
+            if not filters.get('is_admin'):
+                user_dept = filters.get('user_dept', '')
+                es_filters.append({
+                    "bool": {
+                        "should": [
+                            {"term": {"department.keyword": user_dept}},
+                            {"term": {"department.keyword": ""}},
+                            {"term": {"department.keyword": "Público"}},
+                            {"bool": {"must_not": {"exists": {"field": "department"}}}}
+                        ],
+                        "minimum_should_match": 1
+                    }
+                })
+
         body = {
             "from": offset,
             "size": 10,

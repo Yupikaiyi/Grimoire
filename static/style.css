@@ -8,6 +8,7 @@
 :root {
     /* Techno-Light Palette based on Icon.png */
     --primary: #4facfe;
+    --primary-hover: #2b8fe8;
     --secondary: #00f2fe;
     --accent: #2563eb;
     --bg-deep: #f8fafc;
@@ -49,6 +50,10 @@ body {
 
 .text-primary {
     color: var(--primary);
+}
+
+.hidden {
+    display: none !important;
 }
 
 .text-danger {
@@ -1008,6 +1013,82 @@ body {
     color: var(--text-muted);
 }
 
+/* User Session & Header Styles */
+.user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.4rem 1rem;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    margin-left: 1rem;
+    box-shadow: var(--shadow-sm);
+}
+
+.user-avatar {
+    width: 28px;
+    height: 28px;
+    background: var(--gradient-accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+}
+
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.user-name {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-main);
+    line-height: 1.2;
+}
+
+.user-dept {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.admin-label {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 1px 4px;
+    border-radius: 4px;
+    font-size: 0.55rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.logout-btn {
+    color: var(--text-muted);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    padding: 4px;
+    border-radius: 50%;
+}
+
+.logout-btn:hover {
+    color: #ef4444;
+    background: #fee2e2;
+}
+
+.logout-btn i {
+    width: 16px;
+    height: 16px;
+}
+
 /* Colores por extensión */
 .ext-pdf {
     border-color: #ef4444;
@@ -1132,11 +1213,129 @@ body {
 }
 
 @media (max-width: 992px) {
-    .results-layout {
-        grid-template-columns: 1fr;
-    }
-
     .filters-sidebar {
         position: static;
     }
+}
+
+/* ===== Upload Progress Bar ===== */
+.upload-progress {
+    position: relative;
+    background: var(--border);
+    border-radius: 99px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 0.75rem;
+}
+
+.upload-progress.hidden {
+    display: none;
+}
+
+/* Pure CSS spinner for upload button */
+.upload-css-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: upload-spin 0.7s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes upload-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.upload-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 99px;
+    transition: width 0.3s ease;
+}
+
+.upload-progress-text {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ===== Upload Toast Notification ===== */
+.upload-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.9rem 1.4rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    backdrop-filter: blur(12px);
+}
+
+.upload-toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.upload-toast-success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #065f46;
+}
+
+.upload-toast-error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    color: #991b1b;
+}
+
+.upload-toast i {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+/* ===== File Remove Button ===== */
+.file-item {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+}
+
+.file-remove-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s, background 0.2s;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+.file-remove-btn:hover {
+    color: var(--error);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.file-remove-btn svg {
+    width: 14px;
+    height: 14px;
 }

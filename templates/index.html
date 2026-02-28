@@ -25,8 +25,31 @@
                 <h1>Grimoire</h1>
             </div>
             <ul class="nav-links">
-                <li><a href="/" class="active">Inicio</a></li>
-                <li><a href="/about">Acerca de</a></li>
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/about" class="text-muted">Acerca de</a></li>
+                {% if user and user.is_admin %}
+                <li><a href="/admin" class="text-muted">Administración</a></li>
+                {% endif %}
+                {% if user %}
+                <li>
+                    <div class="user-badge" id="user-badge">
+                        <div class="user-avatar">{{ user.username[0].upper() }}</div>
+                        <div class="user-meta">
+                            <span class="user-name">{{ user.username }}</span>
+                            <span class="user-dept">{{ user.department }} {% if user.is_admin %}<span
+                                    class="admin-label">Admin</span>{% endif %}</span>
+                        </div>
+                        <a href="/logout" class="logout-btn" title="Cerrar sesión"><i data-lucide="log-out"></i></a>
+                    </div>
+                </li>
+                {% else %}
+                <li>
+                    <a href="/login" class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="log-in" style="width: 16px; height: 16px;"></i> Iniciar Sesión
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
     </header>
@@ -91,15 +114,97 @@
                             <li class="empty-state">No hay archivos seleccionados</li>
                         </ul>
 
-                        <button type="submit" class="btn btn-primary w-full">
-                            <span>Subir Archivos</span>
-                            <i data-lucide="arrow-up-right"></i>
+                        <div id="uploadProgress" class="upload-progress hidden">
+                            <div class="upload-progress-bar" id="uploadProgressBar"></div>
+                            <span id="uploadProgressText" class="upload-progress-text">Subiendo...</span>
+                        </div>
+                        <button type="submit" id="uploadBtn" class="btn btn-primary w-full">
+                            <span id="uploadBtnText">Subir Archivos</span>
+                            <i data-lucide="arrow-up-right" id="uploadArrowIcon"></i>
+                            <span class="upload-css-spinner hidden" id="uploadSpinner"></span>
                         </button>
                     </form>
                 </div>
             </aside>
         </div>
+
+        {% if user %}
+        <div class="user-dashboard"
+            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 2rem;">
+            <section class="card favorites-section">
+                <div class="card-header"
+                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="star" style="color: #f59e0b; fill: #f59e0b;"></i>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Mis Favoritos</h3>
+                    </div>
+                </div>
+                <ul id="favoritesList" class="file-list empty"
+                    style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <li class="empty-state text-muted text-center" style="padding: 1rem;">Cargando...</li>
+                </ul>
+            </section>
+
+            <section class="card recent-section">
+                <div class="card-header"
+                    style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <i data-lucide="clock" class="text-primary"></i>
+                        <h3 style="margin: 0; font-size: 1.25rem; font-weight: 600;">Documentos Recientes</h3>
+                    </div>
+                </div>
+                <ul id="recentList" class="file-list empty"
+                    style="list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem;">
+                    <li class="empty-state text-muted text-center" style="padding: 1rem;">Cargando...</li>
+                </ul>
+            </section>
+        </div>
+        {% endif %}
     </main>
+
+    <!-- Duplicate Detection Modal -->
+    <div id="duplicateModal" class="modal-overlay">
+        <div class="card" style="max-width:520px; width:90%; padding:2rem; position:relative;">
+            <!-- Step 1: conflict list -->
+            <div id="dupStep1">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                    <i data-lucide="alert-triangle" style="color:#f59e0b; width:24px; height:24px; flex-shrink:0;"></i>
+                    <h3 style="margin:0; font-size:1.15rem;">Archivos duplicados</h3>
+                </div>
+                <p class="text-muted" style="margin-bottom:0.5rem; font-size:0.9rem;">Los siguientes archivos ya existen:</p>
+                <ul id="duplicateList" style="list-style:none; padding:0; margin:0 0 1.25rem 0; display:flex; flex-direction:column; gap:0.4rem;"></ul>
+                <p class="text-muted" style="margin-bottom:1.25rem; font-size:0.9rem;">¿Qué deseas hacer?</p>
+                <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
+                    <button id="duplicateReplaceBtn" class="btn btn-primary" style="flex:1;">
+                        <i data-lucide="refresh-cw"></i> Sustituir
+                    </button>
+                    <button id="duplicateRenameBtn" class="btn" style="flex:1; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-main);">
+                        <i data-lucide="pencil"></i> Renombrar
+                    </button>
+                    <button id="duplicateCancelBtn" class="btn" style="flex:1; background:none; border:1px solid var(--border); color:var(--text-muted);">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+            <!-- Step 2: manual rename inputs -->
+            <div id="dupStep2" style="display:none;">
+                <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem;">
+                    <i data-lucide="pencil" style="color:var(--primary); width:22px; height:22px; flex-shrink:0;"></i>
+                    <h3 style="margin:0; font-size:1.15rem;">Renombrar archivos</h3>
+                </div>
+                <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">Escribe el nuevo nombre para cada archivo:</p>
+                <div id="renameInputsList" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;"></div>
+                <div style="display:flex; gap:0.75rem;">
+                    <button id="dupBackBtn" class="btn" style="background:none; border:1px solid var(--border); color:var(--text-muted);">
+                        <i data-lucide="arrow-left"></i>
+                    </button>
+                    <button id="dupConfirmRenameBtn" class="btn btn-primary" style="flex:1;">
+                        <i data-lucide="check"></i> Confirmar y subir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <footer class="site-footer">
         <div class="footer-content">
@@ -174,6 +279,16 @@
             updateFileList();
         }
 
+        function removeFile(index) {
+            const newTransfer = new DataTransfer();
+            for (let i = 0; i < dataTransfer.files.length; i++) {
+                if (i !== index) newTransfer.items.add(dataTransfer.files[i]);
+            }
+            dataTransfer = newTransfer;
+            fileInput.files = dataTransfer.files;
+            updateFileList();
+        }
+
         function updateFileList() {
             fileList.innerHTML = '';
             if (dataTransfer.files.length === 0) {
@@ -183,6 +298,7 @@
             }
             fileList.classList.remove('empty');
             for (let i = 0; i < dataTransfer.files.length; i++) {
+                const idx = i;
                 const li = document.createElement('li');
                 li.className = 'file-item';
                 li.innerHTML = `
@@ -193,7 +309,11 @@
                             <span class="file-size text-muted text-sm">${(dataTransfer.files[i].size / 1024).toFixed(1)} KB</span>
                         </div>
                     </div>
+                    <button type="button" class="file-remove-btn" title="Quitar archivo">
+                        <i data-lucide="x"></i>
+                    </button>
                 `;
+                li.querySelector('.file-remove-btn').addEventListener('click', () => removeFile(idx));
                 fileList.appendChild(li);
             }
             lucide.createIcons();
@@ -207,42 +327,257 @@
             return 'file';
         }
 
-        // Envío asíncrono para incluir metadatos de fecha local
+        // Upload toast notification
+        function showToast(message, type = 'success') {
+            const existing = document.getElementById('upload-toast');
+            if (existing) existing.remove();
+            const toast = document.createElement('div');
+            toast.id = 'upload-toast';
+            toast.className = `upload-toast upload-toast-${type}`;
+            toast.innerHTML = `<i data-lucide="${type === 'success' ? 'check-circle' : 'alert-circle'}"></i><span>${message}</span>`;
+            document.body.appendChild(toast);
+            lucide.createIcons();
+            requestAnimationFrame(() => toast.classList.add('visible'));
+            setTimeout(() => { toast.classList.remove('visible'); setTimeout(() => toast.remove(), 400); }, 4000);
+        }
+
+        // Duplicate-aware upload
+        function startUpload(renamedFiles) {
+            // renamedFiles: Map<originalName, newName> (or same if no rename)
+            const formData = new FormData();
+            const localDates = [];
+
+            for (let i = 0; i < dataTransfer.files.length; i++) {
+                const file = dataTransfer.files[i];
+                const newName = renamedFiles ? (renamedFiles.get(file.name) || file.name) : file.name;
+                // Rename file on-the-fly using a new File object
+                const blob = newName !== file.name ? new File([file], newName, { type: file.type }) : file;
+                formData.append('file', blob);
+                const dateObj = new Date(file.lastModified);
+                localDates.push({ name: newName, lastModified: dateObj.toISOString().split('T')[0] });
+            }
+            formData.append('local_metadata', JSON.stringify(localDates));
+
+            const uploadBtn = document.getElementById('uploadBtn');
+            const uploadBtnText = document.getElementById('uploadBtnText');
+            const arrowIcon = document.getElementById('uploadArrowIcon');
+            const spinner = document.getElementById('uploadSpinner');
+            const progressContainer = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const progressText = document.getElementById('uploadProgressText');
+
+            function setLoading(loading) {
+                uploadBtn.disabled = loading;
+                uploadBtnText.textContent = loading ? 'Subiendo...' : 'Subir Archivos';
+                arrowIcon.style.display = loading ? 'none' : '';
+                spinner.classList.toggle('hidden', !loading);
+            }
+
+            setLoading(true);
+            progressContainer.classList.remove('hidden');
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/upload');
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const pct = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = pct + '%';
+                    progressText.textContent = `Subiendo... ${pct}%`;
+                }
+            });
+
+            xhr.addEventListener('load', () => {
+                progressBar.style.width = '100%';
+                progressText.textContent = '¡Completado!';
+                const count = dataTransfer.files.length;
+                showToast(`✓ ${count} archivo${count > 1 ? 's' : ''} subido${count > 1 ? 's' : ''} correctamente`, 'success');
+                setTimeout(() => {
+                    dataTransfer = new DataTransfer();
+                    fileInput.files = dataTransfer.files;
+                    updateFileList();
+                    setLoading(false);
+                    progressContainer.classList.add('hidden');
+                    progressBar.style.width = '0%';
+                    if (typeof loadDashboard === 'function') loadDashboard();
+                }, 1200);
+            });
+
+            xhr.addEventListener('error', () => {
+                showToast('Error al subir los archivos. Inténtalo de nuevo.', 'error');
+                setLoading(false);
+                progressContainer.classList.add('hidden');
+            });
+
+            xhr.send(formData);
+        }
+
+        // Duplicate modal logic
+        const dupModal = document.getElementById('duplicateModal');
+        const dupStep1 = document.getElementById('dupStep1');
+        const dupStep2 = document.getElementById('dupStep2');
+
+        document.getElementById('duplicateReplaceBtn').addEventListener('click', () => {
+            dupModal.classList.remove('active');
+            startUpload(null);
+        });
+
+        document.getElementById('duplicateRenameBtn').addEventListener('click', () => {
+            // Switch to rename input step
+            const duplicates = JSON.parse(dupModal.dataset.duplicates || '[]');
+            const container = document.getElementById('renameInputsList');
+            container.innerHTML = duplicates.map(name => {
+                const parts = name.split('.');
+                const ext = parts.length > 1 ? '.' + parts.pop() : '';
+                const base = parts.join('.');
+                return `
+                    <div>
+                        <label style="font-size:0.8rem; color:var(--text-muted); display:block; margin-bottom:0.3rem;">
+                            <i>${name}</i> →
+                        </label>
+                        <input type="text" class="form-control rename-input"
+                            data-original="${name}"
+                            value="${base}_2${ext}"
+                            style="font-size:0.9rem;">
+                    </div>`;
+            }).join('');
+            dupStep1.style.display = 'none';
+            dupStep2.style.display = 'block';
+            lucide.createIcons();
+        });
+
+        document.getElementById('dupBackBtn').addEventListener('click', () => {
+            dupStep2.style.display = 'none';
+            dupStep1.style.display = 'block';
+        });
+
+        document.getElementById('dupConfirmRenameBtn').addEventListener('click', () => {
+            const inputs = document.querySelectorAll('.rename-input');
+            const renamedFiles = new Map();
+            inputs.forEach(input => {
+                const original = input.dataset.original;
+                const newName = input.value.trim() || original;
+                renamedFiles.set(original, newName);
+            });
+            // Map non-duplicate files to themselves
+            for (let i = 0; i < dataTransfer.files.length; i++) {
+                const f = dataTransfer.files[i];
+                if (!renamedFiles.has(f.name)) renamedFiles.set(f.name, f.name);
+            }
+            dupStep2.style.display = 'none';
+            dupStep1.style.display = 'block';
+            dupModal.classList.remove('active');
+            startUpload(renamedFiles);
+        });
+
+        document.getElementById('duplicateCancelBtn').addEventListener('click', () => {
+            dupModal.classList.remove('active');
+        });
+
+        // Envío con detección de duplicados
         uploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const files = dataTransfer.files;
             if (files.length === 0) return;
 
-            const formData = new FormData();
-            const localDates = [];
-
-            for (let i = 0; i < files.length; i++) {
-                formData.append('file', files[i]);
-                // Capturamos lastModified (proxy para fecha creación/modificación local)
-                const dateObj = new Date(files[i].lastModified);
-                localDates.push({
-                    name: files[i].name,
-                    lastModified: dateObj.toISOString().split('T')[0]
-                });
-            }
-
-            formData.append('local_metadata', JSON.stringify(localDates));
-
+            // Check for duplicates first
+            const filenames = Array.from(files).map(f => f.name);
             try {
-                const response = await fetch('/upload', {
+                const res = await fetch('/api/check-duplicates', {
                     method: 'POST',
-                    body: formData
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filenames })
                 });
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    window.location.reload();
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.duplicates && data.duplicates.length > 0) {
+                        // Show modal
+                        const list = document.getElementById('duplicateList');
+                        list.innerHTML = data.duplicates.map(n =>
+                            `<li style="display:flex;align-items:center;gap:0.4rem;font-size:0.85rem;color:var(--text-main);padding:0.3rem 0.5rem;background:rgba(245,158,11,0.08);border-radius:6px;">
+                                <i data-lucide="file" style="width:14px;height:14px;color:#f59e0b;"></i>${n}
+                            </li>`
+                        ).join('');
+                        dupModal.dataset.duplicates = JSON.stringify(data.duplicates);
+                        dupModal.classList.add('active');
+                        lucide.createIcons();
+                        return;
+                    }
                 }
             } catch (err) {
-                console.error("Error subiendo archivos:", err);
-                alert("Hubo un error al subir los archivos.");
+                console.error('Error checking duplicates:', err);
             }
+            startUpload(null);
         });
+
+        async function loadDashboard() {
+            try {
+                const favRes = await fetch('/api/favorites');
+                const favData = await favRes.json();
+                renderMiniList('favoritesList', favData.results, 'Aún no tienes archivos favoritos. Puedes marcarlos con la estrella en la página de resultados.');
+
+                const recRes = await fetch('/api/recent');
+                const recData = await recRes.json();
+                renderMiniList('recentList', recData.results, 'No hay documentos recientes.');
+
+                lucide.createIcons();
+            } catch (err) {
+                console.error("Error loading dashboard data", err);
+            }
+        }
+
+        function getFileIconMini(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) return 'image';
+            if (ext === 'pdf') return 'file-text';
+            if (['doc', 'docx'].includes(ext)) return 'file-text';
+            if (['txt', 'md'].includes(ext)) return 'file-type-2';
+            if (['xls', 'xlsx', 'csv'].includes(ext)) return 'file-spreadsheet';
+            if (['ppt', 'pptx'].includes(ext)) return 'presentation';
+            if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+            if (['py', 'js', 'html', 'css', 'json', 'cpp', 'c', 'java'].includes(ext)) return 'file-code';
+            if (['sql', 'db', 'sqlite'].includes(ext)) return 'database';
+            if (['mp3', 'wav', 'ogg'].includes(ext)) return 'music';
+            if (['mp4', 'mov', 'avi'].includes(ext)) return 'video';
+            return 'file';
+        }
+
+        function renderMiniList(containerId, items, emptyMsg) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `<li class="empty-state text-muted text-center" style="padding: 1.5rem 1rem; font-size: 0.95rem;">${emptyMsg}</li>`;
+                return;
+            }
+
+            items.forEach(file => {
+                const li = document.createElement('li');
+                li.style = "display: flex; align-items: center; justify-content: space-between; padding: 0.75rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease; margin-bottom: 0.5rem;";
+
+                li.onmouseover = () => { li.style.transform = 'translateY(-2px)'; li.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'; };
+                li.onmouseout = () => { li.style.transform = 'translateY(0)'; li.style.boxShadow = 'none'; };
+                li.onclick = () => { window.location.href = `/search?q="${encodeURIComponent(file.name)}"`; };
+
+                const iconName = getFileIconMini(file.name);
+                const deptBadge = file.department ? file.department : 'Público';
+
+                li.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden; width: 100%;">
+                        <i data-lucide="${iconName}" class="text-muted" style="flex-shrink: 0; width: 22px; height: 22px;"></i>
+                        <div style="display: flex; flex-direction: column; overflow: hidden;">
+                            <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.95rem; font-weight: 500; color: var(--text-main);">${file.name}</span>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">${deptBadge} • ${file.size}</span>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="text-muted" style="flex-shrink: 0; width: 16px; height: 16px;"></i>
+                `;
+                container.appendChild(li);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", loadDashboard);
     </script>
 </body>
 

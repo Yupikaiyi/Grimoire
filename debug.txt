@@ -1,0 +1,11 @@
+\nDEBUG /api/favorites: user_id=1\nDEBUG:urllib3.connectionpool:Starting new HTTP connection (1): localhost:8080
+DEBUG:urllib3.connectionpool:http://localhost:8080 "POST /login HTTP/1.1" 302 189
+DEBUG:urllib3.connectionpool:Resetting dropped connection: localhost
+DEBUG:urllib3.connectionpool:http://localhost:8080 "GET / HTTP/1.1" 200 15735
+DEBUG:urllib3.connectionpool:Resetting dropped connection: localhost
+DEBUG:urllib3.connectionpool:Starting new HTTP connection (1): localhost:8080
+DEBUG:urllib3.connectionpool:http://localhost:8080 "POST /login HTTP/1.1" 302 189
+DEBUG:urllib3.connectionpool:Resetting dropped connection: localhost
+DEBUG:urllib3.connectionpool:http://localhost:8080 "GET / HTTP/1.1" 200 15735
+DEBUG:urllib3.connectionpool:Resetting dropped connection: localhost
+DEBUG:urllib3.connectionpool:http://localhost:8080 "GET /api/favorites HTTP/1.1" 200 20
