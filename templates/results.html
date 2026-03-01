@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grimoire - Resultados de Búsqueda</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Icon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body class="results-page">
+    <header class="glass-header">
+        <nav class="nav-container">
+            <div class="logo clickable" onclick="window.location.href='/'">
+                <img src="{{ url_for('static', filename='Icon.png') }}" class="logo-icon">
+                <h1>Grimoire</h1>
+            </div>
+            <div class="header-search">
+                <div class="search-box">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar..." autocomplete="off">
+                    <div class="search-spinner hidden" id="searchSpinner"></div>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/about" class="text-muted">Acerca de</a></li>
+                <li><a href="/tutorial" class="text-muted">Tutorial</a></li>
+                {% if user and user.is_admin %}
+                <li><a href="/admin" class="text-muted">Administración</a></li>
+                {% endif %}
+                {% if user %}
+                <li>
+                    <div class="user-badge" id="user-badge">
+                        <div class="user-avatar">{{ user.username[0].upper() }}</div>
+                        <div class="user-meta">
+                            <span class="user-name">{{ user.username }}</span>
+                            <span class="user-dept">{{ user.department }} {% if user.is_admin %}<span
+                                    class="admin-label">Admin</span>{% endif %}</span>
+                        </div>
+                        <a href="/logout" class="logout-btn" title="Cerrar sesión"><i data-lucide="log-out"></i></a>
+                    </div>
+                </li>
+                {% else %}
+                <li>
+                    <a href="/login" class="btn btn-primary"
+                        style="padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; font-size: 0.9rem; text-decoration: none; display: flex; align-items: center; gap: 0.4rem;">
+                        <i data-lucide="log-in" style="width: 16px; height: 16px;"></i> Iniciar Sesión
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main class="page-container">
+        <div class="results-layout">
+            <!-- Sidebar with Filters -->
+            <aside class="filters-sidebar">
+                <div class="card filters-card">
+                    <div class="card-header">
+                        <i data-lucide="filter" class="section-icon"></i>
+                        <h3>Filtros</h3>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Fecha de Subida</label>
+                        <select id="uploadDateFilter" class="form-select">
+                            <option value="all">Cualquier fecha</option>
+                            <option value="today">Hoy</option>
+                            <option value="yesterday">Ayer</option>
+                            <option value="week">Esta semana</option>
+                            <option value="month">Este mes</option>
+                            <option value="older">Más antiguo</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Fecha de Creación (Local)</label>
+                        <select id="creationDateFilter" class="form-select">
+                            <option value="all">Cualquier fecha</option>
+                            <option value="today">Hoy</option>
+                            <option value="yesterday">Ayer</option>
+                            <option value="week">Esta semana</option>
+                            <option value="month">Este mes</option>
+                            <option value="older">Más antiguo</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Tamaño</label>
+                        <select id="sizeFilter" class="form-select">
+                            <option value="all">Todos los tamaños</option>
+                            <option value="0-1">Pequeño (< 1MB)</option>
+                            <option value="1-10">Mediano (1-10MB)</option>
+                            <option value="10-100">Grande (10-100MB)</option>
+                            <option value="100-0">Muy Grande (> 100MB)</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Responsable</label>
+                        <select id="ownerFilter" class="form-select">
+                            <option value="all">Todos los responsables</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Departamento</label>
+                        <select id="deptFilter" class="form-select">
+                            <option value="all">Todos los departamentos</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Etiquetas (Tags)</label>
+                        <select id="tagFilter" class="form-select">
+                            <option value="all">Todas las etiquetas</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label>Tipo de Archivo</label>
+                        <select id="typeFilter" class="form-select">
+                            <option value="all">Todos los tipos</option>
+                        </select>
+                    </div>
+
+                    <button id="applyFilters" class="btn btn-primary w-full">Aplicar Filtros</button>
+                </div>
+            </aside>
+
+            <!-- Main Results Area -->
+            <section class="results-main">
+                <div id="searchResults" class="search-results-container">
+                    <div class="results-header">
+                        <h2 id="activeQueryDisplay">Resultados para "..."</h2>
+                        <span id="resultsCount" class="badge">0 encontrados</span>
+                    </div>
+                    <ul id="resultsList" class="file-list">
+                        <!-- Results injected here via JS -->
+                    </ul>
+                    <div id="viewMoreContainer" class="view-more-container hidden">
+                        <button id="viewMoreBtn" class="view-more-btn">Ver más resultados</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- File Preview Modal (Purely for Document) -->
+    <div id="previewModal" class="modal-overlay">
+        <div class="modal-container preview-modal-full">
+            <div class="modal-header">
+                <h3><i data-lucide="file-text"></i> <span id="modalTitleText">Previsualización</span></h3>
+                <button onclick="closeModal('previewModal')" class="close-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div id="modalContent" class="modal-content modal-content-single">
+                <div class="search-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Independent Chatbot Side Panel -->
+    <div id="chatbotPanel" class="chatbot-panel-container">
+        <div class="chat-panel-header">
+            <h3><i data-lucide="bot"></i> Grimoire AI</h3>
+        </div>
+        <div id="chatHistory" class="chat-panel-history">
+            <!-- Messages injected here -->
+        </div>
+        <div id="typingIndicator" class="chat-typing-indicator hidden">
+            <span>Grimoire AI está pensando</span>
+            <div class="chat-typing-dot"></div>
+            <div class="chat-typing-dot"></div>
+            <div class="chat-typing-dot"></div>
+        </div>
+        <div class="chat-panel-input-area">
+            <div class="chat-quick-actions">
+                <button type="button" class="btn-quick-action"
+                    onclick="sendQuickMessage('Haz un resumen de este documento')">
+                    <i data-lucide="sparkles"></i> Haz un resumen
+                </button>
+            </div>
+            <form id="chatForm" class="chat-input-wrapper">
+                <input type="text" id="chatInput" class="chat-panel-input" placeholder="Pregunta sobre este archivo..."
+                    autocomplete="off">
+                <button type="submit" class="chat-panel-send-btn">
+                    <i data-lucide="send"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Properties Modal -->
+    <div id="propertiesModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="info"></i> <span>Propiedades</span></h3>
+                <button onclick="closeModal('propertiesModal')" class="close-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div id="propertiesContent" class="modal-content">
+                <!-- Data injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tags Modal -->
+    <div id="tagsModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="hash"></i> <span>Gestionar Tags</span></h3>
+                <button onclick="closeModal('tagsModal')" class="close-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-content">
+                <div class="tags-input-container">
+                    <input type="text" id="tagInput" placeholder="Añadir tag y pulsar Enter..." class="form-control">
+                    <div id="activeTagsList" class="tags-cloud mt-4"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Identity Modal -->
+    <div id="identityModal" class="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3><i data-lucide="user-plus"></i> <span id="identityModalTitle">Asignar Identidad</span></h3>
+                <button onclick="closeModal('identityModal')" class="close-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-content">
+                <div class="form-group mb-4">
+                    <label>Responsable</label>
+                    <input type="text" id="ownerInput" placeholder="Nombre del responsable..."
+                        class="form-control mb-3">
+                </div>
+                <div class="form-group mb-4">
+                    <label>Departamento</label>
+                    <input type="text" id="deptInput" placeholder="Nombre del departamento..." class="form-control">
+                </div>
+                <button onclick="saveIdentity()" class="btn btn-primary w-full mt-4">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const searchInput = document.getElementById('searchInput');
+        const searchSpinner = document.getElementById('searchSpinner');
+        const resultsList = document.getElementById('resultsList');
+        const resultsCount = document.getElementById('resultsCount');
+        const viewMoreContainer = document.getElementById('viewMoreContainer');
+        const viewMoreBtn = document.getElementById('viewMoreBtn');
+        const activeQueryDisplay = document.getElementById('activeQueryDisplay');
+        const applyFilters = document.getElementById('applyFilters');
+
+        let currentQuery = new URLSearchParams(window.location.search).get('q') || '';
+        let currentOffset = 0;
+        let allResultsCount = 0;
+
+        // Initialize state
+        searchInput.value = currentQuery;
+        activeQueryDisplay.textContent = `Resultados para "${currentQuery}"`;
+
+        if (currentQuery) {
+            fetchResults(true);
+        }
+
+        searchInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                currentQuery = searchInput.value.trim();
+                if (currentQuery) {
+                    currentOffset = 0;
+                    activeQueryDisplay.textContent = `Resultados para "${currentQuery}"`;
+                    fetchResults(true);
+                }
+            }
+        });
+
+        applyFilters.addEventListener('click', () => {
+            currentOffset = 0;
+            fetchResults(true);
+        });
+
+        viewMoreBtn.addEventListener('click', () => {
+            currentOffset += 10;
+            fetchResults(false);
+        });
+
+        function fetchResults(isNewSearch) {
+            searchSpinner.classList.remove('hidden');
+            const uploadRange = document.getElementById('uploadDateFilter').value;
+            const creationRange = document.getElementById('creationDateFilter').value;
+            const size = document.getElementById('sizeFilter').value;
+            const owner = document.getElementById('ownerFilter').value;
+            const dept = document.getElementById('deptFilter').value;
+
+            let url = `/api/search?q=${encodeURIComponent(currentQuery)}&offset=${currentOffset}`;
+            if (uploadRange !== "all") url += `&upload_date_range=${uploadRange}`;
+            if (creationRange !== "all") url += `&creation_date_range=${creationRange}`;
+            if (owner !== "all") url += `&owner=${encodeURIComponent(owner)}`;
+            if (dept !== "all") url += `&department=${encodeURIComponent(dept)}`;
+
+            const selectedTag = document.getElementById('tagFilter').value;
+            if (selectedTag !== "all") url += `&tags=${encodeURIComponent(selectedTag)}`;
+
+            const selectedType = document.getElementById('typeFilter').value;
+            if (selectedType !== "all") url += `&type=${encodeURIComponent(selectedType)}`;
+
+            if (size !== "all") {
+                const [min, max] = size.split('-');
+                if (min !== "0") url += `&min_size=${min}`;
+                if (max !== "100" && max !== "0") url += `&max_size=${max}`;
+            }
+
+            fetch(url)
+                .then(res => res.json())
+                .then(data => {
+                    displaySearchResults(data.results, isNewSearch, data.user);
+                });
+        }
+
+        async function loadFileTypeOptions() {
+            try {
+                const response = await fetch('/api/file-types');
+                const types = await response.json();
+                const select = document.getElementById('typeFilter');
+
+                // Clear existing except "All"
+                while (select.options.length > 1) { select.remove(1); }
+
+                types.forEach(type => {
+                    if (type) {
+                        const option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type.toUpperCase();
+                        select.appendChild(option);
+                    }
+                });
+            } catch (err) { console.error("Error loading file types:", err); }
+        }
+
+        async function loadTagOptions() {
+            try {
+                const response = await fetch('/api/tags');
+                const tags = await response.json();
+                const select = document.getElementById('tagFilter');
+                while (select.options.length > 1) select.remove(1);
+                tags.forEach(tag => {
+                    const option = document.createElement('option');
+                    option.value = tag;
+                    option.textContent = tag;
+                    select.appendChild(option);
+                });
+            } catch (err) { console.error("Error loading tags:", err); }
+        }
+
+        async function loadIdentityOptions() {
+            try {
+                const response = await fetch('/api/identity-options');
+                const { owners, departments } = await response.json();
+
+                const ownerSelect = document.getElementById('ownerFilter');
+                const deptSelect = document.getElementById('deptFilter');
+
+                while (ownerSelect.options.length > 1) ownerSelect.remove(1);
+                while (deptSelect.options.length > 1) deptSelect.remove(1);
+
+                owners.forEach(o => {
+                    const opt = document.createElement('option');
+                    opt.value = o; opt.textContent = o;
+                    ownerSelect.appendChild(opt);
+                });
+                departments.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d; opt.textContent = d;
+                    deptSelect.appendChild(opt);
+                });
+            } catch (err) { console.error("Error loading identity options:", err); }
+        }
+
+        // Initialize options on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadTagOptions();
+            loadIdentityOptions();
+            loadFileTypeOptions();
+        });
+
+        function displaySearchResults(results, isNewSearch, userInfo = null) {
+            searchSpinner.classList.add('hidden');
+            if (isNewSearch) resultsList.innerHTML = '';
+
+            if (results.length === 0 && isNewSearch) {
+                resultsList.classList.add('empty');
+                resultsList.innerHTML = '<li class="empty-state">No se encontraron resultados.</li>';
+                viewMoreContainer.classList.add('hidden');
+                resultsCount.textContent = `0 encontrados`;
+            } else {
+                resultsList.classList.remove('empty');
+                allResultsCount = isNewSearch ? results.length : allResultsCount + results.length;
+
+                results.forEach(file => {
+                    const li = document.createElement('li');
+                    li.className = 'file-item';
+
+                    const nameParts = file.name.split('.');
+                    const ext = nameParts.length > 1 ? nameParts.pop() : '';
+                    const baseName = nameParts.join('.');
+
+                    li.innerHTML = `
+                        <div class="file-info">
+                            <i data-lucide="${getFileIcon(file.name)}" class="file-type-icon text-muted"></i>
+                            <div class="file-text-container">
+                                <div class="file-header" style="display: flex; align-items: center; gap: 0.5rem; position: relative; z-index: 10;">
+                                    <button class="icon-btn favorite-btn" onclick="toggleFavorite('${file.name}', this)" title="Marcar/Desmarcar Favorito" style="padding: 0; margin-right: 0.25rem;">
+                                        <i data-lucide="star" style="color: ${file.is_favorite ? '#f59e0b' : 'currentColor'}; fill: ${file.is_favorite ? '#f59e0b' : 'none'};"></i>
+                                    </button>
+                                    <span class="file-name clickable" onclick="openPreview('${file.name}')" style="cursor: pointer; z-index: 20; position: relative;">${baseName}</span>
+                                    ${ext ? `<span class="ext-badge ext-${ext.toLowerCase()}">${ext}</span>` : ''}
+                                </div>
+                                <div class="identity-line">
+                                    ${file.owner ? `<span class="badge-owner"><i data-lucide="user"></i> ${file.owner}</span>` : ''}
+                                    ${file.department ? `<span class="badge-dept"><i data-lucide="building"></i> ${file.department}</span>` : ''}
+                                </div>
+                                <span class="file-size text-muted text-sm">${file.size} - Subido: ${file.date} | Creado: ${file.creation_date}</span>
+                            </div>
+                        </div>
+                        <div class="file-actions">
+                            ${userInfo && userInfo.is_admin ? `
+                                <button class="icon-btn" title="Identidad" onclick="openIdentityModal('${file.name}', '${file.owner || ''}', '${file.department || ''}')">
+                                    <i data-lucide="user-plus"></i>
+                                </button>
+                            ` : ''}
+                            <button class="icon-btn" title="Añadir Tags" onclick="openTagsModal('${file.name}', '${(file.tags || []).join(',')}')">
+                                <i data-lucide="hash"></i>
+                            </button>
+                            <button class="icon-btn" title="Propiedades" onclick="openProperties('${file.name}', '${file.size}', '${file.date}', '${file.creation_date}', '${(file.tags || []).join(',')}', '${file.owner || ''}', '${file.department || ''}')">
+                                <i data-lucide="info"></i>
+                            </button>
+                            <a href="/api/files/${encodeURIComponent(file.name)}" download class="icon-btn text-primary" title="Descargar">
+                                <i data-lucide="download"></i>
+                            </a>
+                        </div>
+                    `;
+                    resultsList.appendChild(li);
+                });
+
+                viewMoreContainer.classList.toggle('hidden', results.length < 10);
+                resultsCount.textContent = `${allResultsCount} encontrados`;
+            }
+            lucide.createIcons();
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            // Imágenes
+            if (['jpg', 'jpeg', 'png', 'gif', 'svg', 'webp'].includes(ext)) return 'image';
+            // Documentos
+            if (ext === 'pdf') return 'file-text';
+            if (['doc', 'docx'].includes(ext)) return 'file-text';
+            if (['txt', 'md'].includes(ext)) return 'file-type-2';
+            // Hojas de cálculo y presentaciones
+            if (['xls', 'xlsx', 'csv'].includes(ext)) return 'file-spreadsheet';
+            if (['ppt', 'pptx'].includes(ext)) return 'presentation';
+            // Archivos comprimidos
+            if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return 'archive';
+            // Código
+            if (['py', 'js', 'html', 'css', 'json', 'cpp', 'c', 'java'].includes(ext)) return 'file-code';
+            if (['sql', 'db', 'sqlite'].includes(ext)) return 'database';
+            // Audio y Video
+            if (['mp3', 'wav', 'ogg'].includes(ext)) return 'music';
+            if (['mp4', 'mov', 'avi'].includes(ext)) return 'video';
+
+            return 'file';
+        }
+
+        let currentPreviewFile = "";
+
+        function openPreview(filename) {
+            currentPreviewFile = filename;
+            const modal = document.getElementById('previewModal');
+            const content = document.getElementById('modalContent');
+
+            document.getElementById('modalTitleText').textContent = filename;
+            modal.classList.add('active');
+            content.innerHTML = '<div class="search-spinner"></div>';
+
+            // Abir panel de chat independiente
+            openChatPanel(filename);
+
+            const ext = filename.split('.').pop().toLowerCase();
+            const url = `/api/files/${encodeURIComponent(filename)}`;
+
+            const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'];
+            const textExts = ['txt', 'md', 'py', 'js', 'html', 'css', 'json', 'sql', 'c', 'cpp', 'java'];
+            const pdfExts = ['pdf'];
+
+            if (imageExts.includes(ext)) {
+                content.innerHTML = `<img src="${url}" class="preview-image" style="width:100%; height:100%; object-fit:contain;">`;
+            } else if (pdfExts.includes(ext)) {
+                content.innerHTML = `<iframe src="${url}" class="preview-pdf" style="width:100%; height:100%; border:none;"></iframe>`;
+            } else if (textExts.includes(ext)) {
+                fetch(url).then(r => r.text()).then(t => {
+                    content.innerHTML = `<pre class="preview-text" style="padding:1.5rem; margin:0; white-space:pre-wrap; font-size:0.85rem; height:100%; overflow-y:auto;">${t.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>`;
+                });
+            } else {
+                content.innerHTML = `
+                    <div class="no-preview-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:1rem; padding:2rem; text-align:center;">
+                        <i data-lucide="eye-off" style="width:48px; height:48px; color:var(--text-muted);"></i>
+                        <p>La previsualización no está disponible para este tipo de archivo (.${ext})</p>
+                        <a href="${url}" download class="btn btn-primary">
+                            <i data-lucide="download"></i> Descargar archivo
+                        </a>
+                    </div>
+                `;
+            }
+            lucide.createIcons();
+        }
+
+        // Chatbot Logic
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const chatHistory = document.getElementById('chatHistory');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (!message || !currentPreviewFile) return;
+
+            // Add user message to UI
+            appendMessage('user', message);
+            chatInput.value = '';
+
+            // Show typing
+            typingIndicator.classList.remove('hidden');
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentPreviewFile,
+                        message: message
+                    })
+                });
+
+                const data = await res.json();
+                typingIndicator.classList.add('hidden');
+
+                if (data.text) {
+                    appendMessage('bot', data.text);
+                } else if (data.error) {
+                    appendMessage('bot', `Error: ${data.error}`);
+                }
+            } catch (err) {
+                typingIndicator.classList.add('hidden');
+                appendMessage('bot', "Lo siento, hubo un error de conexión con el servidor de IA.");
+                console.error(err);
+            }
+        });
+
+        function sendQuickMessage(text) {
+            chatInput.value = text;
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+
+        function appendMessage(role, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-bubble bubble-${role}`;
+            msgDiv.textContent = text;
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function openChatPanel(filename) {
+            const panel = document.getElementById('chatbotPanel');
+            const history = document.getElementById('chatHistory');
+            document.body.classList.add('results-page-with-chat');
+            panel.classList.add('active');
+
+            history.innerHTML = `
+                <div class="chat-bubble bubble-bot">
+                    He analizado <b>${filename}</b>. Soy el experto de Grimoire, ¿qué deseas preguntarme?
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function closeChatPanel() {
+            document.getElementById('chatbotPanel').classList.remove('active');
+            document.body.classList.remove('results-page-with-chat');
+        }
+
+        function openProperties(name, size, upload, creation, tagsStr, owner, dept) {
+            const modal = document.getElementById('propertiesModal');
+            const content = document.getElementById('propertiesContent');
+            const tags = tagsStr ? tagsStr.split(',').filter(t => t.trim() !== '') : [];
+
+            content.innerHTML = `
+                <div class="properties-grid">
+                    <div class="prop-item"><strong>Nombre:</strong> <span>${name}</span></div>
+                    <div class="prop-item"><strong>Tamaño:</strong> <span>${size}</span></div>
+                    <div class="prop-item"><strong>Fecha Subida:</strong> <span>${upload}</span></div>
+                    <div class="prop-item"><strong>Fecha Creación:</strong> <span>${creation}</span></div>
+                    <div class="prop-divider"></div>
+                    <div class="prop-item"><strong>Responsable:</strong> <span>${owner || 'No asignado'}</span></div>
+                    <div class="prop-item"><strong>Departamento:</strong> <span>${dept || 'No asignado'}</span></div>
+                    <div class="prop-item"><strong>Etiquetas:</strong>
+                        <div class="tags-cloud mt-2">
+                            ${tags.length > 0 ? tags.map(t => `<span class="tag-badge">${t}</span>`).join('') : '<span class="text-muted">Sin etiquetas</span>'}
+                        </div>
+                    </div>
+                </div>
+            `;
+            modal.classList.add('active');
+        }
+
+        let currentFileForTags = "";
+        let currentTags = [];
+
+        function openTagsModal(filename, currentTagsStr) {
+            currentFileForTags = filename;
+            currentTags = currentTagsStr ? currentTagsStr.split(',') : [];
+            const modal = document.getElementById('tagsModal');
+            modal.classList.add('active');
+            renderActiveTags();
+        }
+
+        function renderActiveTags() {
+            const list = document.getElementById('activeTagsList');
+            list.innerHTML = currentTags.map(t => `
+                <span class="tag-badge">
+                    ${t}
+                    <i data-lucide="x" class="tag-remove" onclick="removeTag('${t}')"></i>
+                </span>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function removeTag(tag) {
+            currentTags = currentTags.filter(t => t !== tag);
+            renderActiveTags();
+            saveTags(); // Auto-save on removal
+        }
+
+        document.getElementById('tagInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const tag = e.target.value.trim().toLowerCase();
+                if (tag && !currentTags.includes(tag)) {
+                    currentTags.push(tag);
+                    renderActiveTags();
+                    saveTags(); // Auto-save on add
+                }
+                e.target.value = '';
+            }
+        });
+
+        async function saveTags() {
+            const res = await fetch(`/api/files/${encodeURIComponent(currentFileForTags)}/tags`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tags: currentTags })
+            });
+            if (res.ok) {
+                loadAllTags();
+                // Opcional: Recargar resultados en segundo plano para que los botones de Info/Tags tengan la data nueva
+                fetchResults(true);
+            }
+        }
+
+        async function loadAllTags() {
+            const res = await fetch('/api/tags');
+            const tags = await res.json();
+            const filter = document.getElementById('tagFilter');
+            const currentVal = filter.value;
+            filter.innerHTML = '<option value="all">Todas las etiquetas</option>';
+            tags.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.textContent = t;
+                if (t === currentVal) opt.selected = true;
+                filter.appendChild(opt);
+            });
+            loadIdentityOptions();
+        }
+
+        async function loadIdentityOptions() {
+            const res = await fetch('/api/identity-options');
+            const data = await res.json();
+
+            const ownerFilter = document.getElementById('ownerFilter');
+            const deptFilter = document.getElementById('deptFilter');
+
+            const currentOwner = ownerFilter.value;
+            const currentDept = deptFilter.value;
+
+            ownerFilter.innerHTML = '<option value="all">Todos los responsables</option>';
+            data.owners.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o; opt.textContent = o;
+                if (o === currentOwner) opt.selected = true;
+                ownerFilter.appendChild(opt);
+            });
+
+            deptFilter.innerHTML = '<option value="all">Todos los departamentos</option>';
+            data.departments.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                if (d === currentDept) opt.selected = true;
+                deptFilter.appendChild(opt);
+            });
+        }
+
+        let currentFileForIdentity = "";
+        function openIdentityModal(filename, owner, dept) {
+            currentFileForIdentity = filename;
+            document.getElementById('ownerInput').value = owner;
+            document.getElementById('deptInput').value = dept;
+            const modal = document.getElementById('identityModal');
+            modal.classList.add('active');
+        }
+
+        async function saveIdentity() {
+            const owner = document.getElementById('ownerInput').value.trim();
+            const dept = document.getElementById('deptInput').value.trim();
+
+            const res = await fetch(`/api/files/${encodeURIComponent(currentFileForIdentity)}/identity`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ owner, department: dept })
+            });
+
+            if (res.ok) {
+                closeModal('identityModal');
+                loadIdentityOptions();
+                fetchResults(true);
+            }
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            if (id === 'previewModal') closeChatPanel();
+        }
+
+        async function toggleFavorite(filename, btn) {
+            try {
+                const res = await fetch('/api/favorites/toggle', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filename })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const icon = btn.querySelector('svg') || btn.querySelector('i');
+                    if (icon) {
+                        if (data.is_favorite) {
+                            icon.style.color = '#f59e0b';
+                            icon.style.fill = '#f59e0b';
+                        } else {
+                            icon.style.color = 'currentColor';
+                            icon.style.fill = 'none';
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error("Error toggling favorite:", err);
+            }
+        }
+
+        // Cargar tags al iniciar
+        loadAllTags();
+    </script>
+</body>
+
+</html>

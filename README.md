@@ -1,44 +1,60 @@
-# Grimoire - Aplicación Web en Python
+# Grimoire - Smart Document Management & Search
 
-Una aplicación web simple construida con Flask.
+Grimoire es una plataforma avanzada de gestión y búsqueda de documentos que combina búsqueda tradicional por palabras clave con **IA Semántica** (Vectores) para encontrar información por contexto, no solo por coincidencia exacta.
 
-## Requisitos
+## ✨ Características Principales
 
-- Python 3.7 o superior
-- pip (gestor de paquetes de Python)
+- **Búsqueda Híbrida**: Combina Elasticsearch (BM25) con búsqueda semántica (K-NN) usando `sentence-transformers`.
+- **IA Semántica**: Encuentra documentos basándose en su significado, incluso si no contienen las palabras exactas de la consulta.
+- **Gestión de Identidad**: Asocia cada archivo con un **Responsable** y un **Departamento** para una organización estructural clara.
+- **Filtrado Dinámico**: Filtra por fecha, tamaño, etiquetas y extensiones de archivo que se adaptan automáticamente a tu base de datos.
+- **Interfaz "Techno-Light"**: Diseño moderno, claro y responsivo con previsualización de documentos.
+- **Chat con IA (Próximamente)**: Consulta directa sobre el contenido de los documentos usando Gemini.
 
-## Instalación
+## 🛠️ Requisitos Técnico
 
-1. Instala las dependencias:
+### Software
+- Python 3.10+
+- **Elasticsearch 8.x** (corriendo en `http://localhost:9200`)
+- SQLite 3
+
+### Dependencias Principales
+- `flask`: Framework web.
+- `elasticsearch`: Cliente para el motor de búsqueda.
+- `sentence-transformers`: Para la generación de embeddings vectoriales.
+- `pymupdf`: Extracción de contenido de PDFs.
+
+## 🚀 Instalación y Configuración
+
+1. **Clona el repositorio e instala dependencias**:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Ejecución
+2. **Asegúrate de que Elasticsearch esté activo**:
+La aplicación intentará crear el índice `grimoire_files` automáticamente al arrancar.
 
-Para iniciar la aplicación:
-
+3. **Inicia la aplicación**:
 ```bash
 python app.py
 ```
+La aplicación estará disponible en: [http://localhost:8080](http://localhost:8080)
 
-La aplicación estará disponible en: `http://localhost:5000`
-
-## Estructura del Proyecto
+## 📁 Estructura del Proyecto
 
 ```
 Grimoire/
-├── app.py              # Aplicación principal Flask
-├── requirements.txt    # Dependencias del proyecto
-├── templates/          # Plantillas HTML
-│   ├── index.html
-│   └── about.html
-├── static/            # Archivos estáticos (CSS, JS, imágenes)
-│   └── style.css
-└── README.md          # Este archivo
+├── app.py              # Backend principal y API REST
+├── search.py           # Lógica de búsqueda (ES + Modelos de IA)
+├── grimoire.db         # Base de datos SQLite (Metadatos)
+├── testfiles/          # Repositorio de documentos subidos
+├── static/             # CSS moderno y recursos visuales
+└── templates/          # Plantillas Jinja2 (Results, Index, About)
 ```
 
-## Rutas Disponibles
+## 🗺️ API Endpoints
 
-- `/` - Página de inicio
-- `/about` - Página acerca de
+- `GET /api/search?q=...` - Búsqueda híbrida con filtros.
+- `GET /api/file-types` - Obtiene extensiones únicas existentes.
+- `POST /api/files/<name>/identity` - Asigna responsable y departamento.
+- `GET /api/identity-options` - Listado para filtros de la barra lateral.

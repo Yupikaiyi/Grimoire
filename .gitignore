@@ -37,3 +37,9 @@ instance/
 # OS
 .DS_Store
 Thumbs.db
+
+# Project Specific
+testfiles/
+elasticsearch-8.12.0/
+elasticsearch.zip
+Antigravity.exe

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grimoire - Tutorial</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .tutorial-page {
+            max-width: 900px;
+            margin: 0 auto;
+            padding-bottom: 4rem;
+        }
+
+        .tutorial-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tutorial-header h2 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .tutorial-card {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            .tutorial-card {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .tutorial-card:nth-child(even) .tutorial-content {
+                order: -1;
+            }
+        }
+
+        .tutorial-image-wrapper {
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(99, 102, 241, 0.15));
+            border: 1px solid rgba(99, 102, 241, 0.1);
+            padding: 1.5rem;
+        }
+
+        .tutorial-image {
+            width: 100%;
+            max-width: 320px;
+            height: auto;
+            object-fit: contain;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-md);
+            transition: transform 0.3s ease;
+        }
+
+        .tutorial-image:hover {
+            transform: translateY(-5px);
+        }
+
+        .tutorial-content h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tutorial-content p {
+            line-height: 1.6;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .tutorial-list {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 1.25rem;
+        }
+
+        .tutorial-list li {
+            position: relative;
+            padding-left: 1.75rem;
+            margin-bottom: 0.75rem;
+            color: var(--text-main);
+        }
+
+        .tutorial-list li i {
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: var(--primary-color);
+            width: 18px;
+            height: 18px;
+        }
+
+        .tip-box {
+            background: rgba(99, 102, 241, 0.08);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            border-radius: 0 var(--radius-md) var(--radius-md) 0;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+    <header class="glass-header">
+        <nav class="nav-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='Icon.png') }}" class="logo-icon">
+                <h1>Grimoire</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Inicio</a></li>
+                <li><a href="/about">Acerca de</a></li>
+                <li><a href="/tutorial" class="active">Tutorial</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="page-container tutorial-page">
+        <div class="tutorial-header">
+            <h2>Cómo usar Grimoire</h2>
+            <p class="text-muted">Aprende lo básico de tu nueva biblioteca inteligente de forma visual y rápida.</p>
+        </div>
+
+        <section class="tutorial-card">
+            <div class="tutorial-image-wrapper">
+                <img src="{{ url_for('static', filename='img/tutorial_upload.png') }}" alt="Subir documentos"
+                    class="tutorial-image">
+            </div>
+            <div class="tutorial-content">
+                <h3><i data-lucide="upload-cloud"></i> 1. Sube tus Archivos</h3>
+                <p>Alimenta tu Grimoire arrastrando archivos directamente en la página de <strong>Inicio</strong>. ¡La
+                    magia de organización comenzará sola!</p>
+                <ul class="tutorial-list">
+                    <li><i data-lucide="check"></i> Soporta PDFs, imágenes, código y más.</li>
+                    <li><i data-lucide="check"></i> La IA extrae metadatos al instante.</li>
+                    <li><i data-lucide="check"></i> Se categorizan solos.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="tutorial-card">
+            <div class="tutorial-image-wrapper">
+                <img src="{{ url_for('static', filename='img/tutorial_search.png') }}" alt="Búsqueda Semántica"
+                    class="tutorial-image">
+            </div>
+            <div class="tutorial-content">
+                <h3><i data-lucide="zap"></i> 2. Búsqueda Semántica</h3>
+                <p>Nuestra IA encuentra archivos por <strong>significado</strong>, no solo por coincidencia exacta de
+                    palabras.</p>
+                <div class="tip-box">
+                    <strong>💡 Ejemplo:</strong> Busca <em>"contrato de piso"</em> y Grimoire encontrará
+                    <em>"arrendamiento.pdf"</em>. ¡Simple e inteligente!
+                </div>
+            </div>
+        </section>
+
+        <section class="tutorial-card">
+            <div class="tutorial-image-wrapper">
+                <img src="{{ url_for('static', filename='img/tutorial_filter.png') }}" alt="Filtros"
+                    class="tutorial-image">
+            </div>
+            <div class="tutorial-content">
+                <h3><i data-lucide="filter"></i> 3. Filtros Ágiles</h3>
+                <p>Encuentra tu aguja en el pajar combinando la búsqueda con los filtros que encontrarás a la izquierda
+                    en Resultados.</p>
+                <ul class="tutorial-list">
+                    <li><i data-lucide="calendar"></i> <strong>Fecha:</strong> De subida o creación.</li>
+                    <li><i data-lucide="hard-drive"></i> <strong>Tamaño:</strong> ¿Demasiado grande o pequeño?</li>
+                    <li><i data-lucide="file-type"></i> <strong>Tipo y Tag:</strong> Por formato o etiqueta.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="tutorial-card">
+            <div class="tutorial-image-wrapper">
+                <img src="{{ url_for('static', filename='img/tutorial_manage.png') }}" alt="Gestión de Metadatos"
+                    class="tutorial-image">
+            </div>
+            <div class="tutorial-content">
+                <h3><i data-lucide="settings"></i> 4. Gestiona y Organiza</h3>
+                <p>Al buscar, tienes a la derecha acciones rápidas por cada archivo para organizar todo a tu medida.</p>
+                <ul class="tutorial-list">
+                    <li><i data-lucide="user-plus"></i> <strong class="text-primary">Identidad:</strong> Asigna el
+                        archivo a una persona o departamento.</li>
+                    <li><i data-lucide="hash"></i> <strong class="text-primary">Tags:</strong> Crea y añade palabras
+                        clave para filtrar sin esfuerzo.</li>
+                    <li><i data-lucide="info"></i> <strong class="text-primary">Info:</strong> Ver detalles y metadatos
+                        completos.</li>
+                </ul>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <i data-lucide="book-open" class="text-muted"></i>
+                <span class="text-muted">&copy; 2026 Grimoire.</span>
+            </div>
+            <div class="footer-info">
+                <span class="text-muted text-sm">v1.0.0</span>
+                <span class="separator">|</span>
+                <p class="text-muted text-sm">Poderosa gestión de documentos.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Initialize Icons Workspace -->
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
