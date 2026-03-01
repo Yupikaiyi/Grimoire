@@ -8,6 +8,10 @@ from search import mock_search_files
 from elasticsearch import Elasticsearch
 import json
 import sqlite3
+from google import genai
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = 'grimoire_super_secret'
@@ -496,6 +500,70 @@ def list_favorites():
             print("Error fetching favorites from ES:", e)
             
     return jsonify({"results": results})
+
+# Initialize Gemini Client
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+
+@app.route('/api/chat', methods=['POST'])
+@login_required
+def chat_with_doc():
+    data = request.json
+    filename = data.get('filename')
+    user_message = data.get('message')
+    chat_history = data.get('history', []) # list of {role: 'user'|'model', text: '...'}
+
+    if not filename or not user_message:
+        return jsonify({"error": "Faltan datos"}), 400
+
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    if not os.path.exists(file_path):
+        return jsonify({"error": "Archivo no encontrado"}), 404
+
+    # Basic content extraction (text-based for now)
+    ext = filename.split('.')[-1].lower()
+    content = ""
+    
+    # Text-based extensions we can read directly
+    text_exts = ['txt', 'md', 'py', 'js', 'html', 'css', 'json', 'sql', 'c', 'cpp', 'java']
+    
+    if ext in text_exts:
+        try:
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+        except Exception as e:
+            content = f"[Error leyendo archivo: {str(e)}]"
+    else:
+        content = f"[Archivo no textual (tipo .{ext}). Gemini analizará el contexto si es posible.]"
+
+    # Prepare prompt with context
+    system_prompt = (
+        f"Eres el 'Gran Mago de Grimoire', el sabio custodio de esta biblioteca arcana. "
+        f"Tu deber es asistir en el análisis del documento '{filename}' con precisión, seriedad y cortesía mística.\n\n"
+        "DIRECTRICES DE RESPUESTA:\n"
+        "1. RIGOR Y GROUNDING: Basa tus respuestas EXCLUSIVAMENTE en el CONTENIDO DEL DOCUMENTO proporcionado abajo. "
+        "Si la información no está presente, indícalo con honestidad profesional (ej: 'Mis registros no contienen esa información').\n"
+        "2. TONO SERIO Y CULTO: Mantén un registro profesional, directo y sabio. Reduce el uso de términos como 'viajero' o 'hechizo', "
+        "pero conserva la elegancia y el léxico refinado propio de un Gran Mago.\n"
+        "3. NO INVENTAR: No generes datos, fechas ni hechos que no figuren explícitamente en el texto.\n"
+        "4. EFICIENCIA: Al resumir o responder, sé estructurado y ve al grano, manteniendo siempre la cordialidad arcana.\n\n"
+        "CONTENIDO DEL DOCUMENTO (CONTEXTO):\n"
+        "====================================\n"
+        f"{content[:15000]}\n"
+        "====================================\n\n"
+        "Responde a la consulta del viajero basándote únicamente en lo que ves arriba."
+    )
+
+    try:
+        # Simple generation for now, could be improved with chat session
+        full_prompt = f"{system_prompt}\nPregunta: {user_message}"
+        response = client.models.generate_content(
+            model="gemini-2.5-pro", # Using flash for speed
+            contents=full_prompt
+        )
+        return jsonify({"text": response.text})
+    except Exception as e:
+        print(f"Gemini API Error: {e}")
+        return jsonify({"error": f"Error del API de Gemini: {str(e)}"}), 500
 
 @app.route('/api/check-duplicates', methods=['POST'])
 @login_required

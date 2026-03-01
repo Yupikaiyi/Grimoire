@@ -14,6 +14,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Icon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -155,14 +156,47 @@
         </div>
     </main>
 
-    <!-- File Preview Modal -->
+    <!-- File Preview Modal (Purely for Document) -->
     <div id="previewModal" class="modal-overlay">
-        <div class="modal-container">
+        <div class="modal-container preview-modal-full">
             <div class="modal-header">
                 <h3><i data-lucide="file-text"></i> <span id="modalTitleText">Previsualización</span></h3>
                 <button onclick="closeModal('previewModal')" class="close-modal"><i data-lucide="x"></i></button>
             </div>
-            <div id="modalContent" class="modal-content"></div>
+            <div id="modalContent" class="modal-content modal-content-single">
+                <div class="search-spinner"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Independent Chatbot Side Panel -->
+    <div id="chatbotPanel" class="chatbot-panel-container">
+        <div class="chat-panel-header">
+            <h3><i data-lucide="bot"></i> Grimoire AI</h3>
+        </div>
+        <div id="chatHistory" class="chat-panel-history">
+            <!-- Messages injected here -->
+        </div>
+        <div id="typingIndicator" class="chat-typing-indicator hidden">
+            <span>Grimoire AI está pensando</span>
+            <div class="chat-typing-dot"></div>
+            <div class="chat-typing-dot"></div>
+            <div class="chat-typing-dot"></div>
+        </div>
+        <div class="chat-panel-input-area">
+            <div class="chat-quick-actions">
+                <button type="button" class="btn-quick-action"
+                    onclick="sendQuickMessage('Haz un resumen de este documento')">
+                    <i data-lucide="sparkles"></i> Haz un resumen
+                </button>
+            </div>
+            <form id="chatForm" class="chat-input-wrapper">
+                <input type="text" id="chatInput" class="chat-panel-input" placeholder="Pregunta sobre este archivo..."
+                    autocomplete="off">
+                <button type="submit" class="chat-panel-send-btn">
+                    <i data-lucide="send"></i>
+                </button>
+            </form>
         </div>
     </div>
 
@@ -449,12 +483,19 @@
             return 'file';
         }
 
+        let currentPreviewFile = "";
+
         function openPreview(filename) {
+            currentPreviewFile = filename;
             const modal = document.getElementById('previewModal');
             const content = document.getElementById('modalContent');
+
             document.getElementById('modalTitleText').textContent = filename;
             modal.classList.add('active');
             content.innerHTML = '<div class="search-spinner"></div>';
+
+            // Abir panel de chat independiente
+            openChatPanel(filename);
 
             const ext = filename.split('.').pop().toLowerCase();
             const url = `/api/files/${encodeURIComponent(filename)}`;
@@ -464,26 +505,101 @@
             const pdfExts = ['pdf'];
 
             if (imageExts.includes(ext)) {
-                content.innerHTML = `<img src="${url}" class="preview-image">`;
+                content.innerHTML = `<img src="${url}" class="preview-image" style="width:100%; height:100%; object-fit:contain;">`;
             } else if (pdfExts.includes(ext)) {
-                content.innerHTML = `<iframe src="${url}" class="preview-pdf"></iframe>`;
+                content.innerHTML = `<iframe src="${url}" class="preview-pdf" style="width:100%; height:100%; border:none;"></iframe>`;
             } else if (textExts.includes(ext)) {
                 fetch(url).then(r => r.text()).then(t => {
-                    content.innerHTML = `<pre class="preview-text">${t.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>`;
+                    content.innerHTML = `<pre class="preview-text" style="padding:1.5rem; margin:0; white-space:pre-wrap; font-size:0.85rem; height:100%; overflow-y:auto;">${t.replace(/&/g, "&amp;").replace(/</g, "&lt;")}</pre>`;
                 });
             } else {
-                // Archivos no previsualizables (RAR, ZIP, EXE, XFL, etc.)
                 content.innerHTML = `
-                    <div class="no-preview-container">
-                        <i data-lucide="eye-off" class="no-preview-icon"></i>
-                        <p class="no-preview-text">La previsualización no está disponible para este tipo de archivo (.${ext})</p>
-                        <a href="${url}" download class="btn btn-primary mt-4">
-                            <i data-lucide="download"></i> Descargar para ver
+                    <div class="no-preview-container" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:1rem; padding:2rem; text-align:center;">
+                        <i data-lucide="eye-off" style="width:48px; height:48px; color:var(--text-muted);"></i>
+                        <p>La previsualización no está disponible para este tipo de archivo (.${ext})</p>
+                        <a href="${url}" download class="btn btn-primary">
+                            <i data-lucide="download"></i> Descargar archivo
                         </a>
                     </div>
                 `;
             }
             lucide.createIcons();
+        }
+
+        // Chatbot Logic
+        const chatForm = document.getElementById('chatForm');
+        const chatInput = document.getElementById('chatInput');
+        const chatHistory = document.getElementById('chatHistory');
+        const typingIndicator = document.getElementById('typingIndicator');
+
+        chatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const message = chatInput.value.trim();
+            if (!message || !currentPreviewFile) return;
+
+            // Add user message to UI
+            appendMessage('user', message);
+            chatInput.value = '';
+
+            // Show typing
+            typingIndicator.classList.remove('hidden');
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            try {
+                const res = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        filename: currentPreviewFile,
+                        message: message
+                    })
+                });
+
+                const data = await res.json();
+                typingIndicator.classList.add('hidden');
+
+                if (data.text) {
+                    appendMessage('bot', data.text);
+                } else if (data.error) {
+                    appendMessage('bot', `Error: ${data.error}`);
+                }
+            } catch (err) {
+                typingIndicator.classList.add('hidden');
+                appendMessage('bot', "Lo siento, hubo un error de conexión con el servidor de IA.");
+                console.error(err);
+            }
+        });
+
+        function sendQuickMessage(text) {
+            chatInput.value = text;
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+
+        function appendMessage(role, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `chat-bubble bubble-${role}`;
+            msgDiv.textContent = text;
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        function openChatPanel(filename) {
+            const panel = document.getElementById('chatbotPanel');
+            const history = document.getElementById('chatHistory');
+            document.body.classList.add('results-page-with-chat');
+            panel.classList.add('active');
+
+            history.innerHTML = `
+                <div class="chat-bubble bubble-bot">
+                    He analizado <b>${filename}</b>. Soy el experto de Grimoire, ¿qué deseas preguntarme?
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function closeChatPanel() {
+            document.getElementById('chatbotPanel').classList.remove('active');
+            document.body.classList.remove('results-page-with-chat');
         }
 
         function openProperties(name, size, upload, creation, tagsStr, owner, dept) {
@@ -634,6 +750,7 @@
 
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
+            if (id === 'previewModal') closeChatPanel();
         }
 
         async function toggleFavorite(filename, btn) {

@@ -4,3 +4,5 @@ elasticsearch==8.12.0
 sentence-transformers==2.5.1
 torch==2.2.1
 numpy<2
+google-genai==1.65.0
+python-dotenv==1.2.1

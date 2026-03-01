@@ -14,6 +14,7 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='Icon.png') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
@@ -171,17 +172,22 @@
                     <i data-lucide="alert-triangle" style="color:#f59e0b; width:24px; height:24px; flex-shrink:0;"></i>
                     <h3 style="margin:0; font-size:1.15rem;">Archivos duplicados</h3>
                 </div>
-                <p class="text-muted" style="margin-bottom:0.5rem; font-size:0.9rem;">Los siguientes archivos ya existen:</p>
-                <ul id="duplicateList" style="list-style:none; padding:0; margin:0 0 1.25rem 0; display:flex; flex-direction:column; gap:0.4rem;"></ul>
+                <p class="text-muted" style="margin-bottom:0.5rem; font-size:0.9rem;">Los siguientes archivos ya
+                    existen:</p>
+                <ul id="duplicateList"
+                    style="list-style:none; padding:0; margin:0 0 1.25rem 0; display:flex; flex-direction:column; gap:0.4rem;">
+                </ul>
                 <p class="text-muted" style="margin-bottom:1.25rem; font-size:0.9rem;">¿Qué deseas hacer?</p>
                 <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
                     <button id="duplicateReplaceBtn" class="btn btn-primary" style="flex:1;">
                         <i data-lucide="refresh-cw"></i> Sustituir
                     </button>
-                    <button id="duplicateRenameBtn" class="btn" style="flex:1; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-main);">
+                    <button id="duplicateRenameBtn" class="btn"
+                        style="flex:1; background:var(--bg-surface); border:1px solid var(--border); color:var(--text-main);">
                         <i data-lucide="pencil"></i> Renombrar
                     </button>
-                    <button id="duplicateCancelBtn" class="btn" style="flex:1; background:none; border:1px solid var(--border); color:var(--text-muted);">
+                    <button id="duplicateCancelBtn" class="btn"
+                        style="flex:1; background:none; border:1px solid var(--border); color:var(--text-muted);">
                         Cancelar
                     </button>
                 </div>
@@ -192,10 +198,13 @@
                     <i data-lucide="pencil" style="color:var(--primary); width:22px; height:22px; flex-shrink:0;"></i>
                     <h3 style="margin:0; font-size:1.15rem;">Renombrar archivos</h3>
                 </div>
-                <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">Escribe el nuevo nombre para cada archivo:</p>
-                <div id="renameInputsList" style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;"></div>
+                <p class="text-muted" style="margin-bottom:1rem; font-size:0.9rem;">Escribe el nuevo nombre para cada
+                    archivo:</p>
+                <div id="renameInputsList"
+                    style="display:flex; flex-direction:column; gap:0.75rem; margin-bottom:1.5rem;"></div>
                 <div style="display:flex; gap:0.75rem;">
-                    <button id="dupBackBtn" class="btn" style="background:none; border:1px solid var(--border); color:var(--text-muted);">
+                    <button id="dupBackBtn" class="btn"
+                        style="background:none; border:1px solid var(--border); color:var(--text-muted);">
                         <i data-lucide="arrow-left"></i>
                     </button>
                     <button id="dupConfirmRenameBtn" class="btn btn-primary" style="flex:1;">
