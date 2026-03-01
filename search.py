@@ -68,7 +68,7 @@ def mock_search_files(query, offset=0, filters=None):
 
             # Security Filter: Non-admins see their department OR public files (empty department)
             if not filters.get('is_admin'):
-                user_dept = filters.get('user_dept', '')
+                user_dept = filters.get('user_dept') or ''
                 es_filters.append({
                     "bool": {
                         "should": [
