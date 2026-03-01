@@ -8,14 +8,14 @@ Este archivo lista a las personas y organizaciones responsables de mantener el P
 | :--- | :--- | :--- |
 | **Grimoire Project** | Líder de Proyecto y Arquitecto | [@GrimoireProject](https://github.com/GrimoireProject) |
 
-## Colaboradores Core (Hackathon Team)
+##  Colaboradores Core (Hackathon Team)
 
-| Nombre | Especialidad | Responsabilidades |
+| Nombre | Rol | Responsabilidades |
 | :--- | :--- | :--- |
-| *Tu Nombre/Alias aquí* | Backend / IA | Lógica de búsqueda y embeddings |
-| *Compañero 1* | Frontend | Interfaz de usuario y Magia visual |
-| *Compañero 2* | DevOps / Data | Elasticsearch y Docker |
-
+| Jose Manuel Bermudez Vazquez | 🧠 Backend & IA | Embeddings, lógica de búsqueda y conexión con Elasticsearch |
+| Jack Alexander Cubas Gutierrez | 🎨 Frontend | UI, buscador y subida de archivos |
+| Nicolás Moreiras Santiago | 🗄️ Data | Configuración y consultas K-NN en Elasticsearch |
+| Hugo Iglesias Díaz | ⚙️ DevOps | Docker, entorno y deploy |
 ---
 
 ## Áreas de Responsabilidad
